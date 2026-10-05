@@ -228,4 +228,18 @@ IDDS | Track Order #{{ order.id }}
 
 </section>
 
+
+<script>
+(function () {
+    const interval = 8000;
+    setTimeout(function () {
+        const active = document.activeElement;
+        const editing = active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName);
+        if (!editing) {
+            window.location.reload();
+        }
+    }, interval);
+})();
+</script>
+
 {% endblock %}

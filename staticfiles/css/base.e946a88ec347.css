@@ -1,0 +1,394 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    overflow-x: hidden;
+
+    background: var(--color-background);
+    color: var(--color-text);
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+
+    -webkit-font-smoothing: antialiased;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button {
+    border: 0;
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+::selection {
+    background: var(--color-primary);
+    color: #fff;
+}
+
+
+/* ==============================
+   HEADER
+   ============================== */
+
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    background: rgba(248, 245, 240, 0.92);
+
+    border-bottom: 1px solid rgba(33, 28, 24, 0.08);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    transition:
+        box-shadow 250ms ease,
+        background 250ms ease;
+}
+
+.site-header.header-scrolled {
+    background: rgba(255, 255, 255, 0.96);
+
+    box-shadow:
+        0 10px 35px rgba(33, 28, 24, 0.08);
+}
+
+.nav-container {
+    width: min(1200px, 90%);
+    min-height: 78px;
+
+    margin: 0 auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 2rem;
+}
+
+
+/* ==============================
+   BRAND
+   ============================== */
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 0.7rem;
+
+    color: var(--color-primary);
+}
+
+.brand-mark {
+    width: 40px;
+    height: 40px;
+
+    display: grid;
+    place-items: center;
+
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+
+    background: var(--color-surface);
+
+    box-shadow:
+        0 8px 24px rgba(33, 28, 24, 0.07);
+
+    transition:
+        transform 250ms ease,
+        box-shadow 250ms ease;
+}
+
+.brand:hover .brand-mark {
+    transform: rotate(-6deg) scale(1.05);
+
+    box-shadow:
+        0 12px 30px rgba(33, 28, 24, 0.12);
+}
+
+.brand-copy {
+    display: flex;
+    flex-direction: column;
+
+    line-height: 1.05;
+}
+
+.brand-copy strong {
+    font-size: 1.05rem;
+    letter-spacing: 0.12em;
+}
+
+.brand-copy small {
+    margin-top: 0.3rem;
+
+    color: var(--color-text-muted);
+
+    font-size: 0.58rem;
+    font-weight: 700;
+
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+
+/* ==============================
+   NAVIGATION
+   ============================== */
+
+.main-nav {
+    display: flex;
+    align-items: center;
+
+    gap: 2rem;
+}
+
+.main-nav a {
+    position: relative;
+
+    color: var(--color-text-muted);
+
+    font-size: 0.88rem;
+    font-weight: 700;
+
+    transition: color 250ms ease;
+}
+
+.main-nav a::after {
+    content: "";
+
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.5rem;
+
+    height: 1px;
+
+    background: var(--color-primary);
+
+    transform: scaleX(0);
+    transform-origin: right;
+
+    transition: transform 250ms ease;
+}
+
+.main-nav a:hover {
+    color: var(--color-primary);
+}
+
+.main-nav a:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+}
+
+.main-nav .cart-link {
+    color: var(--color-primary);
+}
+
+
+/* ==============================
+   CART BADGE
+   ============================== */
+
+.cart-badge {
+    min-width: 21px;
+    height: 21px;
+
+    padding: 0 0.35rem;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-left: 0.25rem;
+
+    border-radius: 999px;
+
+    background: var(--color-primary);
+    color: #fff;
+
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+
+
+/* ==============================
+   MAIN
+   ============================== */
+
+main {
+    min-height: 60vh;
+}
+
+
+/* ==============================
+   MESSAGES
+   ============================== */
+
+.global-messages {
+    width: min(1100px, 90%);
+    margin: 1rem auto 0;
+}
+
+.message {
+    padding: 0.9rem 1.2rem;
+    margin-bottom: 0.75rem;
+
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+
+    background: var(--color-surface);
+
+    box-shadow:
+        0 12px 30px rgba(33, 28, 24, 0.07);
+}
+
+
+/* ==============================
+   FOOTER
+   ============================== */
+
+.site-footer {
+    margin-top: 5rem;
+
+    background: #f2ede7;
+
+    border-top: 1px solid var(--color-border);
+}
+
+.footer-container {
+    width: min(1200px, 90%);
+
+    margin: 0 auto;
+    padding: 3rem 0;
+
+    display: flex;
+    justify-content: space-between;
+
+    gap: 2rem;
+}
+
+.footer-container strong {
+    color: var(--color-primary);
+    letter-spacing: 0.12em;
+}
+
+.footer-container p {
+    margin-top: 0.4rem;
+
+    color: var(--color-text-muted);
+
+    font-size: 0.85rem;
+}
+
+.footer-bottom {
+    padding: 1rem 5%;
+
+    border-top: 1px solid var(--color-border);
+
+    color: var(--color-text-muted);
+
+    font-size: 0.72rem;
+    text-align: center;
+}
+
+
+/* ==============================
+   ACCESSIBILITY
+   ============================== */
+
+.sr-only {
+    position: absolute;
+
+    width: 1px;
+    height: 1px;
+
+    padding: 0;
+    margin: -1px;
+
+    overflow: hidden;
+
+    clip: rect(0, 0, 0, 0);
+
+    white-space: nowrap;
+    border: 0;
+}
+
+
+/* ==============================
+   RESPONSIVE
+   ============================== */
+
+@media (max-width: 650px) {
+
+    .nav-container {
+        min-height: 70px;
+    }
+
+    .brand-copy small {
+        display: none;
+    }
+
+    .main-nav {
+        gap: 1rem;
+    }
+
+    .main-nav a {
+        font-size: 0.78rem;
+    }
+
+    .footer-container {
+        flex-direction: column;
+    }
+}
+
+
+@media (max-width: 420px) {
+
+    .brand-mark {
+        width: 34px;
+        height: 34px;
+    }
+
+    .brand-copy strong {
+        font-size: 0.9rem;
+    }
+
+    .main-nav {
+        gap: 0.7rem;
+    }
+
+    .main-nav a {
+        font-size: 0.72rem;
+    }
+}

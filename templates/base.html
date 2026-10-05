@@ -23,6 +23,7 @@
         {% endblock %}
     </title>
 
+
     <!-- Global Styles -->
 
     <link
@@ -52,6 +53,7 @@
 
 <body>
 
+
     <!-- =========================================================
          HEADER
          ========================================================= -->
@@ -59,6 +61,7 @@
     <header class="site-header">
 
         <div class="nav-container">
+
 
             <!-- BRAND -->
 
@@ -96,6 +99,9 @@
                 aria-label="Main navigation"
             >
 
+
+                <!-- HOME -->
+
                 <a
                     href="{% url 'home' %}"
                 >
@@ -103,12 +109,32 @@
                 </a>
 
 
+                <!-- TABLES -->
+
                 <a
                     href="{% url 'table_selection' %}"
+                >
+                    Tables
+                </a>
+
+
+                <!-- MENU
+                     Public page.
+                     Login is NOT required to view the menu.
+                -->
+
+                <a
+                    href="/restaurant/menu/"
                 >
                     Menu
                 </a>
 
+
+                <!-- CART
+                     The cart view itself handles login protection.
+                     Guest → Login page.
+                     Logged-in customer → Cart.
+                -->
 
                 <a
                     href="{% url 'cart' %}"
@@ -128,9 +154,12 @@
                 </a>
 
 
-                <!-- CUSTOMER LINKS -->
+                <!-- =================================================
+                     LOGGED-IN CUSTOMER LINKS
+                     ================================================= -->
 
                 {% if request.user.is_authenticated and not request.user.is_staff %}
+
 
                     <a
                         href="{% url 'accounts:dashboard' %}"
@@ -138,24 +167,34 @@
                         My Account
                     </a>
 
+
                     <a
-                        href="{% url 'orders:my_orders' %}"
+                        href="{% url 'accounts:my_orders' %}"
                     >
                         My Orders
                     </a>
 
-                {% endif %}
+
+                    <a
+                        href="{% url 'accounts:logout' %}"
+                    >
+                        Logout
+                    </a>
 
 
-                <!-- STAFF LINKS -->
+                <!-- =================================================
+                     STAFF LINKS
+                     ================================================= -->
 
-                {% if request.user.is_authenticated and request.user.is_staff %}
+                {% elif request.user.is_authenticated and request.user.is_staff %}
+
 
                     <a
                         href="{% url 'accounts:staff_dashboard' %}"
                     >
                         Staff Dashboard
                     </a>
+
 
                     {% if request.user.is_superuser %}
 
@@ -167,13 +206,20 @@
 
                     {% endif %}
 
+
                     <a
                         href="{% url 'accounts:logout' %}"
                     >
                         Logout
                     </a>
 
+
+                <!-- =================================================
+                     GUEST
+                     ================================================= -->
+
                 {% else %}
+
 
                     <!-- STAFF LOGIN -->
 
@@ -184,7 +230,9 @@
                         Staff Login
                     </a>
 
+
                 {% endif %}
+
 
             </nav>
 
@@ -193,11 +241,15 @@
     </header>
 
 
+
     <!-- =========================================================
-         GLOBAL MESSAGES
+         MAIN CONTENT
          ========================================================= -->
 
     <main>
+
+
+        <!-- GLOBAL MESSAGES -->
 
         {% if messages %}
 
@@ -218,14 +270,14 @@
         {% endif %}
 
 
-        <!-- =====================================================
-             PAGE CONTENT
-             ===================================================== -->
+        <!-- PAGE CONTENT -->
 
         {% block content %}
         {% endblock %}
 
+
     </main>
+
 
 
     <!-- =========================================================
@@ -235,6 +287,7 @@
     <footer class="site-footer">
 
         <div class="footer-container">
+
 
             <div class="footer-brand">
 
@@ -257,6 +310,7 @@
 
             </div>
 
+
         </div>
 
 
@@ -269,6 +323,7 @@
     </footer>
 
 
+
     <!-- =========================================================
          JAVASCRIPT
          ========================================================= -->
@@ -276,6 +331,7 @@
     <script src="{% static 'js/main.js' %}"></script>
 
     {% block extra_js %}{% endblock %}
+
 
 </body>
 

@@ -1,523 +1,1134 @@
 {% extends "base.html" %}
 
-{% block title %}
-Waiter Dashboard | IDDS
+{% block title %}Customer Dashboard | IDDS{% endblock %}
+
+{% block extra_css %}
+
+<style>
+
+    /* =========================================================
+       CUSTOMER DASHBOARD
+       ========================================================= */
+
+    .customer-dashboard {
+        padding: 0 0 4rem;
+    }
+
+    .dashboard-hero {
+        background:
+            radial-gradient(
+                circle at top right,
+                rgba(142, 99, 64, 0.14),
+                transparent 38%
+            ),
+            linear-gradient(
+                135deg,
+                #f7f2ec,
+                #fffdf9
+            );
+        border-bottom: 1px solid rgba(107, 79, 58, 0.12);
+        padding: 4.5rem 0 3.5rem;
+    }
+
+    .dashboard-hero-inner {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 2rem;
+    }
+
+    .dashboard-hero-copy {
+        max-width: 720px;
+    }
+
+    .dashboard-hero h1 {
+        margin: 0.45rem 0 0.7rem;
+        font-size: clamp(2.2rem, 5vw, 3.8rem);
+        line-height: 1.05;
+    }
+
+    .dashboard-hero p:not(.eyebrow) {
+        margin: 0;
+        color: #6d625a;
+        font-size: 1.05rem;
+    }
+
+    .dashboard-welcome-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.9rem 1.15rem;
+        background: #ffffff;
+        border: 1px solid rgba(107, 79, 58, 0.12);
+        border-radius: 999px;
+        box-shadow: 0 8px 24px rgba(62, 43, 28, 0.07);
+        white-space: nowrap;
+    }
+
+    .dashboard-welcome-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #6b4f3a;
+        color: #fff;
+        font-size: 1.1rem;
+    }
+
+    .dashboard-welcome-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+
+    .dashboard-welcome-text small {
+        color: #8b7b6d;
+    }
+
+    .dashboard-content {
+        padding-top: 2.5rem;
+    }
+
+    /* =========================================================
+       QUICK ACTIONS
+       ========================================================= */
+
+    .dashboard-section-heading {
+        margin-bottom: 1.25rem;
+    }
+
+    .dashboard-section-heading h2 {
+        margin: 0.25rem 0 0;
+        font-size: 1.65rem;
+    }
+
+    .dashboard-section-heading p {
+        margin: 0.45rem 0 0;
+        color: #76695f;
+    }
+
+    .dashboard-actions {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .dashboard-action {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        min-height: 155px;
+        padding: 1.35rem;
+        background: #fff;
+        border: 1px solid rgba(107, 79, 58, 0.12);
+        border-radius: 18px;
+        color: inherit;
+        text-decoration: none;
+        box-shadow: 0 8px 24px rgba(62, 43, 28, 0.055);
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease,
+            border-color 0.2s ease;
+    }
+
+    .dashboard-action:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 32px rgba(62, 43, 28, 0.11);
+        border-color: rgba(107, 79, 58, 0.28);
+    }
+
+    .dashboard-action-icon {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 13px;
+        background: #f3ebe3;
+        color: #6b4f3a;
+        font-size: 1.35rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .dashboard-action strong {
+        font-size: 1.05rem;
+    }
+
+    .dashboard-action small {
+        color: #81746b;
+        line-height: 1.45;
+    }
+
+    /* =========================================================
+       MAIN PANELS
+       ========================================================= */
+
+    .dashboard-main-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr);
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .dashboard-panel {
+        background: #fff;
+        border: 1px solid rgba(107, 79, 58, 0.12);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 8px 24px rgba(62, 43, 28, 0.055);
+    }
+
+    .dashboard-panel + .dashboard-panel {
+        margin-top: 1.5rem;
+    }
+
+    .panel-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        padding-bottom: 1.1rem;
+        margin-bottom: 1.1rem;
+        border-bottom: 1px solid rgba(107, 79, 58, 0.1);
+    }
+
+    .panel-heading h2 {
+        margin: 0.2rem 0 0;
+        font-size: 1.4rem;
+    }
+
+    .panel-heading p {
+        margin: 0;
+    }
+
+    .panel-link {
+        color: #6b4f3a;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .panel-link:hover {
+        text-decoration: underline;
+    }
+
+    /* =========================================================
+       TABLE SESSION
+       ========================================================= */
+
+    .session-card {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .session-stat {
+        padding: 1.1rem;
+        background: #f8f4ef;
+        border-radius: 14px;
+    }
+
+    .session-stat span {
+        display: block;
+        color: #8b7b6d;
+        font-size: 0.82rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .session-stat strong {
+        display: block;
+        font-size: 1.05rem;
+    }
+
+    .session-empty {
+        padding: 1.35rem;
+        background: #faf7f3;
+        border-radius: 14px;
+        color: #75685e;
+        margin-bottom: 1.25rem;
+    }
+
+    .table-list {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .table-option {
+        padding: 0.95rem;
+        background: #faf7f3;
+        border: 1px solid rgba(107, 79, 58, 0.1);
+        border-radius: 12px;
+    }
+
+    .table-option strong {
+        display: block;
+        color: #493528;
+    }
+
+    .table-option small {
+        color: #8b7b6d;
+    }
+
+    /* =========================================================
+       ORDERS
+       ========================================================= */
+
+    .order-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .order-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: #faf7f3;
+        border-radius: 14px;
+        text-decoration: none;
+        color: inherit;
+        border: 1px solid transparent;
+        transition:
+            background 0.2s ease,
+            border-color 0.2s ease;
+    }
+
+    .order-row:hover {
+        background: #f5eee7;
+        border-color: rgba(107, 79, 58, 0.14);
+    }
+
+    .order-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .order-info strong {
+        color: #493528;
+    }
+
+    .order-info small {
+        color: #81746b;
+    }
+
+    .order-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        text-align: right;
+    }
+
+    .order-total {
+        font-weight: 800;
+        color: #493528;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.35rem 0.7rem;
+        border-radius: 999px;
+        background: #eee4da;
+        color: #624633;
+        font-size: 0.76rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    /* =========================================================
+       SERVICE REQUESTS
+       ========================================================= */
+
+    .service-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .service-button {
+        width: 100%;
+        padding: 1rem;
+        background: #faf7f3;
+        border: 1px solid rgba(107, 79, 58, 0.1);
+        border-radius: 14px;
+        color: #493528;
+        text-align: left;
+        cursor: pointer;
+        transition:
+            background 0.2s ease,
+            transform 0.2s ease;
+    }
+
+    .service-button:hover {
+        background: #f2e9e0;
+        transform: translateY(-2px);
+    }
+
+    .service-button strong {
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .service-button small {
+        color: #81746b;
+    }
+
+    /* =========================================================
+       ACCOUNT PANEL
+       ========================================================= */
+
+    .account-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .account-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.95rem 1rem;
+        background: #faf7f3;
+        border-radius: 12px;
+        color: #493528;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .account-link:hover {
+        background: #f2e9e0;
+    }
+
+    /* =========================================================
+       BUTTONS
+       ========================================================= */
+
+    .dashboard-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.8rem 1.25rem;
+        border-radius: 999px;
+        background: #6b4f3a;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 700;
+        border: 0;
+        cursor: pointer;
+    }
+
+    .dashboard-button:hover {
+        background: #57402f;
+    }
+
+    .dashboard-button.secondary {
+        background: #eee4da;
+        color: #5d4331;
+    }
+
+    /* =========================================================
+       EMPTY STATE
+       ========================================================= */
+
+    .empty-state {
+        padding: 1.5rem;
+        text-align: center;
+        background: #faf7f3;
+        border-radius: 14px;
+        color: #75685e;
+    }
+
+    .empty-state strong {
+        display: block;
+        color: #493528;
+        margin-bottom: 0.3rem;
+    }
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+
+    @media (max-width: 1000px) {
+
+        .dashboard-actions {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .dashboard-main-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .table-list {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+    }
+
+    @media (max-width: 650px) {
+
+        .dashboard-hero {
+            padding: 3rem 0 2.5rem;
+        }
+
+        .dashboard-hero-inner {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .dashboard-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .session-card {
+            grid-template-columns: 1fr;
+        }
+
+        .table-list {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .service-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .order-row {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .order-meta {
+            width: 100%;
+            justify-content: space-between;
+            text-align: left;
+        }
+
+    }
+
+</style>
+
 {% endblock %}
+
 
 {% block content %}
 
-<section class="page-section">
+<section class="customer-dashboard">
 
-    <div class="container">
+    <!-- =====================================================
+         HERO
+         ===================================================== -->
 
-        <!-- ==================================================
-             HEADER
-             ================================================== -->
+    <div class="dashboard-hero">
 
-        <div class="page-heading reveal">
+        <div class="container">
+
+            <div class="dashboard-hero-inner">
+
+                <div class="dashboard-hero-copy">
+
+                    <p class="eyebrow">
+                        CUSTOMER PORTAL
+                    </p>
+
+                    <h1>
+                        Welcome back,
+                        {{ request.user.get_full_name|default:request.user.username }}
+                    </h1>
+
+                    <p>
+                        Manage your dining experience, orders and table from one place.
+                    </p>
+
+                </div>
+
+
+                <div class="dashboard-welcome-badge">
+
+                    <div class="dashboard-welcome-avatar">
+                        👤
+                    </div>
+
+                    <div class="dashboard-welcome-text">
+
+                        <strong>
+                            {{ request.user.username }}
+                        </strong>
+
+                        <small>
+                            Customer account
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="container dashboard-content">
+
+
+        <!-- =================================================
+             QUICK ACTIONS
+             ================================================= -->
+
+        <div class="dashboard-section-heading">
 
             <p class="eyebrow">
-                SERVICE OPERATIONS
+                QUICK ACTIONS
             </p>
 
-            <h1>
-                Waiter Dashboard
-            </h1>
-
-            <p>
-                Serve food prepared by the kitchen and handle
-                customer service requests.
-            </p>
+            <h2>
+                What would you like to do?
+            </h2>
 
         </div>
 
 
-        <!-- ==================================================
-             SIMPLE SUMMARY
-             ================================================== -->
+        <div class="dashboard-actions">
 
-        <div class="kitchen-summary-grid">
 
-            <div class="summary-card">
+            <a
+                href="{% url 'table_selection' %}"
+                class="dashboard-action"
+            >
 
-                <span class="summary-label">
-                    READY TO SERVE
+                <span class="dashboard-action-icon">
+                    🍽️
                 </span>
 
                 <strong>
-                    {{ ready_orders|length }}
+                    Browse Menu
                 </strong>
 
                 <small>
-                    Food from kitchen
+                    Explore food and drinks available today.
                 </small>
 
-            </div>
+            </a>
 
 
-            <div class="summary-card">
+            <a
+                href="{% url 'cart' %}"
+                class="dashboard-action"
+            >
 
-                <span class="summary-label">
-                    CUSTOMER REQUESTS
+                <span class="dashboard-action-icon">
+                    🛒
                 </span>
 
                 <strong>
-                    {{ new_request_count }}
+                    My Cart
                 </strong>
 
                 <small>
-                    Need your attention
+                    Review selected items before ordering.
                 </small>
 
-            </div>
+            </a>
+
+
+            <a
+                href="{% url 'accounts:my_orders' %}"
+                class="dashboard-action"
+            >
+
+                <span class="dashboard-action-icon">
+                    📋
+                </span>
+
+                <strong>
+                    My Orders
+                </strong>
+
+                <small>
+                    View previous and current orders.
+                </small>
+
+            </a>
+
+
+            <a
+                href="{% url 'accounts:profile' %}"
+                class="dashboard-action"
+            >
+
+                <span class="dashboard-action-icon">
+                    👤
+                </span>
+
+                <strong>
+                    My Profile
+                </strong>
+
+                <small>
+                    Manage your customer account.
+                </small>
+
+            </a>
 
         </div>
 
 
-        <!-- ==================================================
-             FOOD READY
-             ================================================== -->
+        <!-- =================================================
+             MAIN CONTENT
+             ================================================= -->
 
-        <section class="confirmation-card reveal">
-
-            <div class="section-heading">
-
-                <div>
-
-                    <p class="eyebrow">
-                        KITCHEN → TABLE
-                    </p>
-
-                    <h2>
-                        Food Ready to Serve
-                    </h2>
-
-                    <p>
-                        Only orders marked <strong>Ready</strong>
-                        by the Chef appear here.
-                    </p>
-
-                </div>
-
-            </div>
+        <div class="dashboard-main-grid">
 
 
-            {% if ready_orders %}
+            <!-- LEFT COLUMN -->
 
-                <div class="report-table-wrapper">
+            <div>
 
-                    <table class="report-table">
 
-                        <thead>
+                <!-- DINING SESSION -->
 
-                            <tr>
+                <div class="dashboard-panel">
 
-                                <th>
-                                    Order
-                                </th>
+                    <div class="panel-heading">
 
-                                <th>
+                        <div>
+
+                            <p class="eyebrow">
+                                DINING SESSION
+                            </p>
+
+                            <h2>
+                                Your Table
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    {% if active_session %}
+
+                        <div class="session-card">
+
+                            <div class="session-stat">
+
+                                <span>
                                     Table
-                                </th>
+                                </span>
 
-                                <th>
-                                    Customer
-                                </th>
+                                <strong>
+                                    Table {{ active_session.table.table_number }}
+                                </strong>
 
-                                <th>
-                                    Items
-                                </th>
+                            </div>
 
-                                <th>
-                                    Action
-                                </th>
 
-                            </tr>
+                            <div class="session-stat">
 
-                        </thead>
-
-
-                        <tbody>
-
-                            {% for order in ready_orders %}
-
-                                <tr>
-
-                                    <td>
-                                        <strong>
-                                            #{{ order.id }}
-                                        </strong>
-                                    </td>
-
-
-                                    <td>
-                                        Table
-                                        {{ order.session.table.table_number }}
-                                    </td>
-
-
-                                    <td>
-                                        {{ order.session.customer_name|default:"Guest" }}
-                                    </td>
-
-
-                                    <td>
-
-                                        {% for item in order.items.all %}
-
-                                            {{ item.item_name }}
-                                            × {{ item.quantity }}
-
-                                            {% if not forloop.last %}
-                                                <br>
-                                            {% endif %}
-
-                                        {% endfor %}
-
-                                    </td>
-
-
-                                    <td>
-
-                                        {% if order.assigned_waiter_id %}
-
-                                            {% if order.assigned_waiter_id == waiter.id %}
-
-                                                <div class="assigned-label">
-                                                    Taken by {{ order.assigned_waiter.username }}
-                                                </div>
-
-                                                <form
-                                                    method="post"
-                                                    action="{% url 'accounts:waiter_serve_order' order.id %}"
-                                                >
-
-                                                    {% csrf_token %}
-
-                                                    <button
-                                                        type="submit"
-                                                        class="btn btn-primary"
-                                                    >
-                                                        Serve Food
-                                                    </button>
-
-                                                </form>
-
-                                            {% else %}
-
-                                                Taken by {{ order.assigned_waiter.username }}
-
-                                            {% endif %}
-
-                                        {% else %}
-
-                                            <form
-                                                method="post"
-                                                action="{% url 'accounts:waiter_take_order' order.id %}"
-                                            >
-
-                                                {% csrf_token %}
-
-                                                <button
-                                                    type="submit"
-                                                    class="btn btn-primary"
-                                                >
-                                                    Take Order
-                                                </button>
-
-                                            </form>
-
-                                        {% endif %}
-
-                                    </td>
-
-                                </tr>
-
-                            {% endfor %}
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            {% else %}
-
-                <div class="empty-state">
-
-                    <h3>
-                        No food is waiting for service
-                    </h3>
-
-                    <p>
-                        When the Chef marks an order as ready,
-                        it will appear here.
-                    </p>
-
-                </div>
-
-            {% endif %}
-
-        </section>
-
-
-        <!-- ==================================================
-             CUSTOMER REQUESTS
-             ================================================== -->
-
-        <section class="confirmation-card reveal">
-
-            <div class="section-heading">
-
-                <div>
-
-                    <p class="eyebrow">
-                        CUSTOMER SERVICE
-                    </p>
-
-                    <h2>
-                        Customer Requests
-                    </h2>
-
-                    <p>
-                        Only water, cutlery and bill requests
-                        are handled by the waiter.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            {% if waiter_requests %}
-
-                <div class="report-table-wrapper">
-
-                    <table class="report-table">
-
-                        <thead>
-
-                            <tr>
-
-                                <th>
-                                    Table
-                                </th>
-
-                                <th>
-                                    Request
-                                </th>
-
-                                <th>
-                                    Message
-                                </th>
-
-                                <th>
-                                    Time
-                                </th>
-
-                                <th>
+                                <span>
                                     Status
-                                </th>
+                                </span>
 
-                                <th>
-                                    Action
-                                </th>
+                                <strong>
+                                    Active
+                                </strong>
 
-                            </tr>
-
-                        </thead>
+                            </div>
 
 
-                        <tbody>
+                            <div class="session-stat">
 
-                            {% for service_request in waiter_requests %}
+                                <span>
+                                    Started
+                                </span>
 
-                                <tr>
+                                <strong>
+                                    {{ active_session.started_at|date:"d M Y, h:i A" }}
+                                </strong>
 
-                                    <td>
+                            </div>
+
+                        </div>
+
+
+                        <a
+                            href="{% url 'accounts:active_session' %}"
+                            class="dashboard-button"
+                        >
+                            View Dining Session
+                        </a>
+
+                    {% else %}
+
+                        <div class="session-empty">
+
+                            <strong>
+                                No active dining session
+                            </strong>
+
+                            Choose a table to begin your dining experience.
+
+                        </div>
+
+
+                        {% if tables %}
+
+                            <div class="table-list">
+
+                                {% for table in tables %}
+
+                                    <div class="table-option">
 
                                         <strong>
-                                            Table
-                                            {{ service_request.session.table.table_number }}
+                                            Table {{ table.table_number }}
                                         </strong>
 
-                                    </td>
+                                        <small>
+                                            {{ table.capacity }} seats
+                                        </small>
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                        {% endif %}
 
 
-                                    <td>
+                        <a
+                            href="{% url 'accounts:available_tables' %}"
+                            class="dashboard-button"
+                        >
+                            Choose a Table
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- RECENT ORDERS -->
+
+                <div class="dashboard-panel">
+
+                    <div class="panel-heading">
+
+                        <div>
+
+                            <p class="eyebrow">
+                                RECENT ACTIVITY
+                            </p>
+
+                            <h2>
+                                My Orders
+                            </h2>
+
+                        </div>
+
+
+                        <a
+                            href="{% url 'accounts:my_orders' %}"
+                            class="panel-link"
+                        >
+                            View all →
+                        </a>
+
+                    </div>
+
+
+                    {% if recent_orders %}
+
+                        <div class="order-list">
+
+                            {% for order in recent_orders %}
+
+                                <a
+                                    href="{% url 'accounts:order_detail' order.id %}"
+                                    class="order-row"
+                                >
+
+                                    <div class="order-info">
 
                                         <strong>
-                                            {{ service_request.get_request_type_display }}
+                                            Order #{{ order.id }}
                                         </strong>
 
-                                    </td>
+                                        {% if order.session and order.session.table %}
 
-
-                                    <td>
-                                        {{ service_request.message|default:"—" }}
-                                    </td>
-
-
-                                    <td>
-                                        {{ service_request.requested_at|date:"d M Y, h:i A" }}
-                                    </td>
-
-
-                                    <td>
-
-                                        {% if service_request.status == "requested" %}
-
-                                            <span class="request-status status-requested">
-                                                New
-                                            </span>
-
-                                        {% else %}
-
-                                            <span class="request-status status-accepted">
-                                                Accepted
-                                            </span>
+                                            <small>
+                                                Table {{ order.session.table.table_number }}
+                                            </small>
 
                                         {% endif %}
 
-                                    </td>
+                                    </div>
 
 
-                                    <td>
+                                    <div class="order-meta">
 
-                                        {% if service_request.status == "requested" %}
+                                        <span class="status-pill">
+                                            {{ order.get_status_display }}
+                                        </span>
 
-                                            <form
-                                                method="post"
-                                                action="{% url 'accounts:waiter_accept_request' service_request.id %}"
-                                            >
+                                        <span class="order-total">
+                                            ₹{{ order.total_amount }}
+                                        </span>
 
-                                                {% csrf_token %}
+                                    </div>
 
-                                                <button
-                                                    type="submit"
-                                                    class="btn btn-primary"
-                                                >
-                                                    Accept
-                                                </button>
-
-                                            </form>
-
-                                        {% else %}
-
-                                            <form
-                                                method="post"
-                                                action="{% url 'accounts:waiter_complete_request' service_request.id %}"
-                                            >
-
-                                                {% csrf_token %}
-
-                                                <button
-                                                    type="submit"
-                                                    class="btn btn-secondary"
-                                                >
-                                                    Mark Done
-                                                </button>
-
-                                            </form>
-
-                                        {% endif %}
-
-                                    </td>
-
-                                </tr>
+                                </a>
 
                             {% endfor %}
 
-                        </tbody>
+                        </div>
 
-                    </table>
+                    {% else %}
+
+                        <div class="empty-state">
+
+                            <strong>
+                                No orders yet
+                            </strong>
+
+                            Place your first order from the menu.
+
+                            <div style="margin-top: 1rem;">
+
+                                <a
+                                    href="{% url 'table_selection' %}"
+                                    class="dashboard-button"
+                                >
+                                    Browse Menu
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                    {% endif %}
 
                 </div>
 
-            {% else %}
+            </div>
 
-                <div class="empty-state">
 
-                    <h3>
-                        No customer requests
-                    </h3>
+            <!-- RIGHT COLUMN -->
 
-                    <p>
-                        Water, cutlery and bill requests will
-                        appear here.
-                    </p>
+            <div>
+
+
+                <!-- CUSTOMER SERVICE -->
+
+                <div class="dashboard-panel">
+
+                    <div class="panel-heading">
+
+                        <div>
+
+                            <p class="eyebrow">
+                                CUSTOMER SERVICE
+                            </p>
+
+                            <h2>
+                                Need Assistance?
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    {% if active_session %}
+
+                        <div class="service-grid">
+
+
+                            <form
+                                method="post"
+                                action="{% url 'accounts:create_service_request' %}"
+                            >
+
+                                {% csrf_token %}
+
+                                <input
+                                    type="hidden"
+                                    name="request_type"
+                                    value="water"
+                                >
+
+                                <button
+                                    type="submit"
+                                    class="service-button"
+                                >
+
+                                    <strong>
+                                        💧 Request Water
+                                    </strong>
+
+                                    <small>
+                                        Ask the waiter for water.
+                                    </small>
+
+                                </button>
+
+                            </form>
+
+
+                            <form
+                                method="post"
+                                action="{% url 'accounts:create_service_request' %}"
+                            >
+
+                                {% csrf_token %}
+
+                                <input
+                                    type="hidden"
+                                    name="request_type"
+                                    value="cutlery"
+                                >
+
+                                <button
+                                    type="submit"
+                                    class="service-button"
+                                >
+
+                                    <strong>
+                                        🍴 Request Cutlery
+                                    </strong>
+
+                                    <small>
+                                        Ask for additional cutlery.
+                                    </small>
+
+                                </button>
+
+                            </form>
+
+
+                            <form
+                                method="post"
+                                action="{% url 'accounts:create_service_request' %}"
+                            >
+
+                                {% csrf_token %}
+
+                                <input
+                                    type="hidden"
+                                    name="request_type"
+                                    value="bill"
+                                >
+
+                                <button
+                                    type="submit"
+                                    class="service-button"
+                                >
+
+                                    <strong>
+                                        💳 Request Bill
+                                    </strong>
+
+                                    <small>
+                                        Ask the waiter for your bill.
+                                    </small>
+
+                                </button>
+
+                            </form>
+
+
+                            <a
+                                href="{% url 'accounts:my_service_requests' %}"
+                                class="service-button"
+                            >
+
+                                <strong>
+                                    📞 My Requests
+                                </strong>
+
+                                <small>
+                                    View your service requests.
+                                </small>
+
+                            </a>
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="empty-state">
+
+                            Start a dining session to request assistance.
+
+                        </div>
+
+                    {% endif %}
 
                 </div>
 
-            {% endif %}
 
-        </section>
+                <!-- ACCOUNT -->
 
+                <div class="dashboard-panel">
 
-        <!-- ==================================================
-             QUICK ACTIONS
-             ================================================== -->
+                    <div class="panel-heading">
 
-        <div class="quick-actions">
+                        <div>
 
-            <a
-                href="{% url 'billing:dashboard' %}"
-                class="quick-card"
-            >
+                            <p class="eyebrow">
+                                ACCOUNT
+                            </p>
 
-                <span>
-                    💳
-                </span>
+                            <h2>
+                                Account Settings
+                            </h2>
 
-                <strong>
-                    Billing
-                </strong>
+                        </div>
 
-                <small>
-                    Generate and complete bills
-                </small>
-
-            </a>
+                    </div>
 
 
-            <a
-                href="{% url 'home' %}"
-                class="quick-card"
-            >
+                    <div class="account-links">
 
-                <span>
-                    🏠
-                </span>
-
-                <strong>
-                    Home
-                </strong>
-
-                <small>
-                    Return to IDDS
-                </small>
-
-            </a>
+                        <a
+                            href="{% url 'accounts:profile' %}"
+                            class="account-link"
+                        >
+                            <span>My Profile</span>
+                            <span>→</span>
+                        </a>
 
 
-            <a
-                href="{% url 'accounts:logout' %}"
-                class="quick-card"
-            >
+                        <a
+                            href="{% url 'accounts:change_password' %}"
+                            class="account-link"
+                        >
+                            <span>Change Password</span>
+                            <span>→</span>
+                        </a>
 
-                <span>
-                    ↪
-                </span>
 
-                <strong>
-                    Logout
-                </strong>
+                        <a
+                            href="{% url 'accounts:logout' %}"
+                            class="account-link"
+                        >
+                            <span>Logout</span>
+                            <span>→</span>
+                        </a>
 
-                <small>
-                    Sign out of IDDS
-                </small>
+                    </div>
 
-            </a>
+                </div>
+
+            </div>
 
         </div>
 
@@ -526,36 +1137,17 @@ Waiter Dashboard | IDDS
 </section>
 
 
-<style>
-
-    .request-status {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.35rem 0.7rem;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 700;
-    }
-
-
-    .status-requested {
-        background: rgba(201, 166, 107, 0.18);
-        color: var(--color-primary);
-    }
-
-
-    .status-accepted {
-        background: rgba(107, 79, 58, 0.12);
-        color: var(--color-primary);
-    }
-
-
-    .assigned-label {
-        margin-bottom: 0.45rem;
-        font-size: 0.78rem;
-        font-weight: 700;
-    }
-
-</style>
+<script>
+(function () {
+    const interval = 8000;
+    setTimeout(function () {
+        const active = document.activeElement;
+        const editing = active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName);
+        if (!editing) {
+            window.location.reload();
+        }
+    }, interval);
+})();
+</script>
 
 {% endblock %}

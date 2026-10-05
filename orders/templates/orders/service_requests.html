@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}My Service Requests | IDDS{% endblock %}
+
+{% block content %}
+
+<section class="service-page">
+
+    <div class="service-container">
+
+        <div class="service-heading">
+            <p class="eyebrow">CUSTOMER SERVICE</p>
+
+            <h1>My Service Requests</h1>
+
+            <p>
+                View the requests you have made during your dining experience.
+            </p>
+        </div>
+
+
+        <div class="service-summary">
+
+            <div class="service-summary-card">
+                <span>Total Requests</span>
+                <strong>{{ service_requests|length }}</strong>
+            </div>
+
+            <div class="service-summary-card">
+                <span>Active</span>
+                <strong>
+                    {{ service_requests|length }}
+                </strong>
+            </div>
+
+            <div class="service-summary-card">
+                <span>Dining Table</span>
+                <strong>
+                    {% if service_requests %}
+                        {{ service_requests.0.session.table.table_number }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </strong>
+            </div>
+
+        </div>
+
+
+        {% if service_requests %}
+
+            <div class="service-list">
+
+                {% for request in service_requests %}
+
+                    <article class="service-card">
+
+                        <div class="service-card-top">
+
+                            <div>
+
+                                <h2>
+                                    {{ request.get_request_type_display }}
+                                </h2>
+
+                                <span class="service-table">
+                                    Table {{ request.session.table.table_number }}
+                                </span>
+
+                            </div>
+
+
+                            <span class="status">
+                                {{ request.get_status_display }}
+                            </span>
+
+                        </div>
+
+
+                        {% if request.message %}
+
+                            <div class="service-message">
+                                {{ request.message }}
+                            </div>
+
+                        {% endif %}
+
+
+                        <span class="service-date">
+                            Requested
+                            {{ request.requested_at|date:"d M Y, h:i A" }}
+                        </span>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <h2>No service requests</h2>
+
+                <p>
+                    You haven't made any service requests yet.
+                    They will appear here when you request assistance.
+                </p>
+
+                <a href="{% url 'customer_dashboard' %}"
+                   class="btn btn-primary">
+                    Back to Dashboard
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</section>
+
+{% endblock %}

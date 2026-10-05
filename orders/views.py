@@ -120,6 +120,18 @@ def add_to_cart(request, item_id):
 
     _save_cart(request, cart)
 
+    cart_count = sum(int(value) for value in cart.values())
+
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        from django.http import JsonResponse
+
+        return JsonResponse({
+            "success": True,
+            "message": f"{item.name} was added to your cart.",
+            "cart_count": cart_count,
+            "quantity": cart[str(item.id)],
+        })
+
     messages.success(
         request,
         f"{item.name} was added to your cart.",
@@ -160,6 +172,17 @@ def update_cart(request, item_id):
         cart[str(item.id)] = quantity
 
     _save_cart(request, cart)
+
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        from django.http import JsonResponse
+
+        cart_count = sum(int(value) for value in cart.values())
+        return JsonResponse({
+            "success": True,
+            "quantity": cart.get(str(item.id), 0),
+            "cart_count": cart_count,
+            "removed": str(item.id) not in cart,
+        })
 
     return redirect("orders:cart")
 

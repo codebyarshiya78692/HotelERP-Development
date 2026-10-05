@@ -1,591 +1,591 @@
-{% extends "base.html" %}
+    {% extends "base.html" %}
 
 
-{% block title %}
-IDDS | Your Order
-{% endblock %}
+    {% block title %}
+    IDDS | Your Order
+    {% endblock %}
 
 
-{% block extra_css %}
+    {% block extra_css %}
 
-<style>
+    <style>
 
-    /* ========================================================
-       CART FOOD IMAGES
-       ======================================================== */
+        /* ========================================================
+        CART FOOD IMAGES
+        ======================================================== */
 
-    .cart-item {
-        overflow: hidden;
-    }
+        .cart-item {
+            overflow: hidden;
+        }
 
-
-    .cart-item-layout {
-        width: 100%;
-
-        display: grid;
-
-        grid-template-columns:
-            150px
-            minmax(0, 1fr);
-
-        gap: 1.25rem;
-
-        align-items: center;
-    }
-
-
-    .cart-item-image {
-        width: 150px;
-        height: 150px;
-
-        overflow: hidden;
-
-        border-radius: 18px;
-
-        background:
-            linear-gradient(
-                135deg,
-                #e8ddd1,
-                #f8f5f0
-            );
-    }
-
-
-    .cart-item-image img {
-        width: 100%;
-        height: 100%;
-
-        display: block;
-
-        object-fit: cover;
-
-        transition:
-            transform 700ms
-            cubic-bezier(
-                0.22,
-                1,
-                0.36,
-                1
-            );
-    }
-
-
-    .cart-item:hover
-    .cart-item-image img {
-        transform: scale(1.05);
-    }
-
-
-    .cart-item-image-placeholder {
-        width: 100%;
-        height: 100%;
-
-        display: grid;
-
-        place-items: center;
-
-        padding: 1rem;
-
-        text-align: center;
-
-        color: var(--color-text-muted);
-
-        font-size: 0.7rem;
-
-        font-weight: 700;
-
-        letter-spacing: 0.08em;
-
-        text-transform: uppercase;
-    }
-
-
-    @media (max-width: 700px) {
 
         .cart-item-layout {
-            grid-template-columns: 1fr;
+            width: 100%;
+
+            display: grid;
+
+            grid-template-columns:
+                150px
+                minmax(0, 1fr);
+
+            gap: 1.25rem;
+
+            align-items: center;
         }
 
 
         .cart-item-image {
-            width: 100%;
-            height: 210px;
+            width: 150px;
+            height: 150px;
+
+            overflow: hidden;
+
+            border-radius: 18px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #e8ddd1,
+                    #f8f5f0
+                );
         }
 
-    }
 
-</style>
+        .cart-item-image img {
+            width: 100%;
+            height: 100%;
 
-{% endblock %}
+            display: block;
 
+            object-fit: cover;
 
-{% block content %}
-
-
-<section class="section page-section">
-
-
-    <div class="container">
-
-
-        <!-- =================================================
-             PAGE HEADING
-             ================================================= -->
-
-        <div class="page-heading reveal">
+            transition:
+                transform 700ms
+                cubic-bezier(
+                    0.22,
+                    1,
+                    0.36,
+                    1
+                );
+        }
 
 
-            <p class="eyebrow">
-                TABLE {{ table.table_number }}
-            </p>
+        .cart-item:hover
+        .cart-item-image img {
+            transform: scale(1.05);
+        }
 
 
-            <h1>
-                Your order
-            </h1>
+        .cart-item-image-placeholder {
+            width: 100%;
+            height: 100%;
+
+            display: grid;
+
+            place-items: center;
+
+            padding: 1rem;
+
+            text-align: center;
+
+            color: var(--color-text-muted);
+
+            font-size: 0.7rem;
+
+            font-weight: 700;
+
+            letter-spacing: 0.08em;
+
+            text-transform: uppercase;
+        }
 
 
-            <p>
-                Review your selections before
-                sending everything to the kitchen.
-            </p>
+        @media (max-width: 700px) {
+
+            .cart-item-layout {
+                grid-template-columns: 1fr;
+            }
 
 
-        </div>
+            .cart-item-image {
+                width: 100%;
+                height: 210px;
+            }
+
+        }
+
+    </style>
+
+    {% endblock %}
 
 
-        <!-- =================================================
-             CART CONTENT
-             ================================================= -->
-
-        {% if cart_items %}
+    {% block content %}
 
 
-            <div class="cart-layout">
+    <section class="section page-section">
 
 
-                <!-- =================================================
-                     CART ITEMS
-                     ================================================= -->
-
-                <div class="cart-items">
+        <div class="container">
 
 
-                    {% for cart_item in cart_items %}
+            <!-- =================================================
+                PAGE HEADING
+                ================================================= -->
+
+            <div class="page-heading reveal">
 
 
-                        <article
-                            class="
-                                cart-item
-                                reveal
-                            "
-                        >
+                <p class="eyebrow">
+                    TABLE {{ table.table_number }}
+                </p>
 
 
-                            <div
+                <h1>
+                    Your order
+                </h1>
+
+
+                <p>
+                    Review your selections before
+                    sending everything to the kitchen.
+                </p>
+
+
+            </div>
+
+
+            <!-- =================================================
+                CART CONTENT
+                ================================================= -->
+
+            {% if cart_items %}
+
+
+                <div class="cart-layout">
+
+
+                    <!-- =================================================
+                        CART ITEMS
+                        ================================================= -->
+
+                    <div class="cart-items">
+
+
+                        {% for cart_item in cart_items %}
+
+
+                            <article
                                 class="
-                                    cart-item-layout
+                                    cart-item
+                                    reveal
                                 "
                             >
 
 
-                                <!-- =================================
-                                     REAL FOOD IMAGE
-                                     ================================= -->
-
-                                {% if cart_item.item.image %}
-
-
-                                    <div
-                                        class="
-                                            cart-item-image
-                                        "
-                                    >
-
-                                        <img
-                                            src="{{ cart_item.item.image.url }}"
-                                            alt="{{ cart_item.item.name }}"
-                                            loading="lazy"
-                                        >
-
-                                    </div>
-
-
-                                {% else %}
-
-
-                                    <div
-                                        class="
-                                            cart-item-image
-                                        "
-                                    >
-
-                                        <div
-                                            class="
-                                                cart-item-image-placeholder
-                                            "
-                                        >
-                                            Food image coming soon
-                                        </div>
-
-                                    </div>
-
-
-                                {% endif %}
-
-
-                                <!-- =================================
-                                     ITEM INFORMATION
-                                     ================================= -->
-
                                 <div
                                     class="
-                                        cart-item-info
+                                        cart-item-layout
                                     "
                                 >
 
 
-                                    <p class="card-label">
-                                        ITEM {{ forloop.counter }}
-                                    </p>
+                                    <!-- =================================
+                                        REAL FOOD IMAGE
+                                        ================================= -->
+
+                                    {% if cart_item.item.image %}
 
 
-                                    <h2>
-                                        {{ cart_item.item.name }}
-                                    </h2>
+                                        <div
+                                            class="
+                                                cart-item-image
+                                            "
+                                        >
+
+                                            <img
+                                                src="{{ cart_item.item.image.url }}"
+                                                alt="{{ cart_item.item.name }}"
+                                                loading="lazy"
+                                            >
+
+                                        </div>
 
 
-                                    {% if cart_item.item.description %}
+                                    {% else %}
 
 
-                                        <p>
-                                            {{ cart_item.item.description }}
-                                        </p>
+                                        <div
+                                            class="
+                                                cart-item-image
+                                            "
+                                        >
+
+                                            <div
+                                                class="
+                                                    cart-item-image-placeholder
+                                                "
+                                            >
+                                                Food image coming soon
+                                            </div>
+
+                                        </div>
 
 
                                     {% endif %}
 
 
-                                    <strong class="price">
-                                        ₹{{ cart_item.item.price }}
+                                    <!-- =================================
+                                        ITEM INFORMATION
+                                        ================================= -->
+
+                                    <div
+                                        class="
+                                            cart-item-info
+                                        "
+                                    >
+
+
+                                        <p class="card-label">
+                                            ITEM {{ forloop.counter }}
+                                        </p>
+
+
+                                        <h2>
+                                            {{ cart_item.item.name }}
+                                        </h2>
+
+
+                                        {% if cart_item.item.description %}
+
+
+                                            <p>
+                                                {{ cart_item.item.description }}
+                                            </p>
+
+
+                                        {% endif %}
+
+
+                                        <strong class="price">
+                                            ₹{{ cart_item.item.price }}
+                                        </strong>
+
+
+                                    </div>
+
+
+                                </div>
+
+
+                                <!-- =================================
+                                    QUANTITY + LINE TOTAL
+                                    ================================= -->
+
+                                <div
+                                    class="
+                                        cart-item-actions
+                                    "
+                                >
+
+
+                                    <form
+                                        method="post"
+                                        action="{% url 'update_cart' cart_item.item.id %}"
+                                        class="quantity-form"
+                                    >
+
+
+                                        {% csrf_token %}
+
+
+                                        <label
+                                            for="
+                                                quantity-{{ cart_item.item.id }}
+                                            "
+                                            class="sr-only"
+                                        >
+                                            Quantity
+                                        </label>
+
+
+                                        <input
+                                            id="
+                                                quantity-{{ cart_item.item.id }}
+                                            "
+                                            class="quantity-input"
+                                            type="number"
+                                            name="quantity"
+                                            value="{{ cart_item.quantity }}"
+                                            min="0"
+                                            max="20"
+                                        >
+
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-secondary"
+                                        >
+                                            Update
+                                        </button>
+
+
+                                    </form>
+
+
+                                    <strong
+                                        class="
+                                            cart-price
+                                        "
+                                    >
+                                        ₹{{ cart_item.total }}
                                     </strong>
 
 
                                 </div>
 
 
-                            </div>
+                            </article>
 
 
-                            <!-- =================================
-                                 QUANTITY + LINE TOTAL
-                                 ================================= -->
-
-                            <div
-                                class="
-                                    cart-item-actions
-                                "
-                            >
-
-
-                                <form
-                                    method="post"
-                                    action="{% url 'update_cart' cart_item.item.id %}"
-                                    class="quantity-form"
-                                >
-
-
-                                    {% csrf_token %}
-
-
-                                    <label
-                                        for="
-                                            quantity-{{ cart_item.item.id }}
-                                        "
-                                        class="sr-only"
-                                    >
-                                        Quantity
-                                    </label>
-
-
-                                    <input
-                                        id="
-                                            quantity-{{ cart_item.item.id }}
-                                        "
-                                        class="quantity-input"
-                                        type="number"
-                                        name="quantity"
-                                        value="{{ cart_item.quantity }}"
-                                        min="0"
-                                        max="20"
-                                    >
-
-
-                                    <button
-                                        type="submit"
-                                        class="btn btn-secondary"
-                                    >
-                                        Update
-                                    </button>
-
-
-                                </form>
-
-
-                                <strong
-                                    class="
-                                        cart-price
-                                    "
-                                >
-                                    ₹{{ cart_item.total }}
-                                </strong>
-
-
-                            </div>
-
-
-                        </article>
-
-
-                    {% endfor %}
-
-
-                </div>
-
-
-                <!-- =================================================
-                     ORDER SUMMARY
-                     ================================================= -->
-
-                <aside
-                    class="
-                        order-summary
-                        reveal
-                    "
-                >
-
-
-                    <p class="eyebrow">
-                        CHECKOUT
-                    </p>
-
-
-                    <h2>
-                        Order Summary
-                    </h2>
-
-
-                    <!-- TABLE -->
-
-                    <div class="summary-row">
-
-
-                        <span>
-                            Table
-                        </span>
-
-
-                        <strong>
-                            {{ table.table_number }}
-                        </strong>
-
-
-                    </div>
-
-
-                    <!-- ITEMS -->
-
-                    <div class="summary-row">
-
-
-                        <span>
-                            Items
-                        </span>
-
-
-                        <strong>
-                            {{ cart_items|length }}
-                        </strong>
-
-
-                    </div>
-
-
-                    <!-- SUBTOTAL -->
-
-                    <div class="summary-row">
-
-
-                        <span>
-                            Subtotal
-                        </span>
-
-
-                        <strong>
-                            ₹{{ subtotal }}
-                        </strong>
-
-
-                    </div>
-
-
-                    <!-- TOTAL -->
-
-                    <div class="summary-row">
-
-
-                        <span>
-                            Total
-                        </span>
-
-
-                        <strong class="price">
-                            ₹{{ subtotal }}
-                        </strong>
+                        {% endfor %}
 
 
                     </div>
 
 
                     <!-- =================================================
-                         SPECIAL INSTRUCTIONS
-                         ================================================= -->
+                        ORDER SUMMARY
+                        ================================================= -->
 
-                    <form
-                        method="post"
-                        action="{% url 'place_order' %}"
-                        style="margin-top: 1.5rem;"
-                    >
-
-
-                        {% csrf_token %}
-
-
-                        <label
-                            for="special_instructions"
-                            class="form-label"
-                        >
-                            Special instructions
-                        </label>
-
-
-                        <textarea
-                            id="special_instructions"
-                            name="special_instructions"
-                            rows="4"
-                            placeholder="Allergies, preferences or requests for the kitchen..."
-                            style="
-                                width: 100%;
-                                padding: 0.9rem;
-                                border: 1px solid var(--color-border);
-                                border-radius: 12px;
-                                background: var(--color-background);
-                                color: var(--color-text);
-                                resize: vertical;
-                                outline: none;
-                            "
-                        ></textarea>
-
-
-                        <button
-                            type="submit"
-                            class="btn btn-primary btn-large"
-                            style="margin-top: 1rem;"
-                        >
-                            Send Order to Kitchen
-                            <span>
-                                →
-                            </span>
-                        </button>
-
-
-                    </form>
-
-
-                    <!-- CONTINUE ORDERING -->
-
-                    <a
-                        href="{% url 'menu' table.id %}"
+                    <aside
                         class="
-                            btn
-                            btn-secondary
-                            btn-full
+                            order-summary
+                            reveal
                         "
-                        style="margin-top: 0.75rem;"
                     >
-                        Continue Ordering
-                    </a>
 
 
-                </aside>
+                        <p class="eyebrow">
+                            CHECKOUT
+                        </p>
 
 
-            </div>
+                        <h2>
+                            Order Summary
+                        </h2>
 
 
-        {% else %}
+                        <!-- TABLE -->
+
+                        <div class="summary-row">
 
 
-            <!-- =================================================
-                 EMPTY CART
-                 ================================================= -->
-
-            <div
-                class="
-                    empty-state
-                    reveal
-                "
-            >
+                            <span>
+                                Table
+                            </span>
 
 
-                <div
-                    class="
-                        empty-state-icon
-                    "
-                >
-                    🛒
+                            <strong>
+                                {{ table.table_number }}
+                            </strong>
+
+
+                        </div>
+
+
+                        <!-- ITEMS -->
+
+                        <div class="summary-row">
+
+
+                            <span>
+                                Items
+                            </span>
+
+
+                            <strong>
+                                {{ cart_items|length }}
+                            </strong>
+
+
+                        </div>
+
+
+                        <!-- SUBTOTAL -->
+
+                        <div class="summary-row">
+
+
+                            <span>
+                                Subtotal
+                            </span>
+
+
+                            <strong>
+                                ₹{{ subtotal }}
+                            </strong>
+
+
+                        </div>
+
+
+                        <!-- TOTAL -->
+
+                        <div class="summary-row">
+
+
+                            <span>
+                                Total
+                            </span>
+
+
+                            <strong class="price">
+                                ₹{{ subtotal }}
+                            </strong>
+
+
+                        </div>
+
+
+                        <!-- =================================================
+                            SPECIAL INSTRUCTIONS
+                            ================================================= -->
+
+                        <form
+                            method="post"
+                            action="{% url 'place_order' %}"
+                            style="margin-top: 1.5rem;"
+                        >
+
+
+                            {% csrf_token %}
+
+
+                            <label
+                                for="special_instructions"
+                                class="form-label"
+                            >
+                                Special instructions
+                            </label>
+
+
+                            <textarea
+                                id="special_instructions"
+                                name="special_instructions"
+                                rows="4"
+                                placeholder="Allergies, preferences or requests for the kitchen..."
+                                style="
+                                    width: 100%;
+                                    padding: 0.9rem;
+                                    border: 1px solid var(--color-border);
+                                    border-radius: 12px;
+                                    background: var(--color-background);
+                                    color: var(--color-text);
+                                    resize: vertical;
+                                    outline: none;
+                                "
+                            ></textarea>
+
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary btn-large"
+                                style="margin-top: 1rem;"
+                            >
+                                Send Order to Kitchen
+                                <span>
+                                    →
+                                </span>
+                            </button>
+
+
+                        </form>
+
+
+                        <!-- CONTINUE ORDERING -->
+
+                        <a
+                            href="{% url 'menu' table.id %}"
+                            class="
+                                btn
+                                btn-secondary
+                                btn-full
+                            "
+                            style="margin-top: 0.75rem;"
+                        >
+                            Continue Ordering
+                        </a>
+
+
+                    </aside>
+
+
                 </div>
 
 
-                <p class="eyebrow">
-                    YOUR ORDER
-                </p>
+            {% else %}
 
 
-                <h2>
-                    Your cart is empty
-                </h2>
+                <!-- =================================================
+                    EMPTY CART
+                    ================================================= -->
 
-
-                <p>
-                    Add something delicious from our menu
-                    to get started.
-                </p>
-
-
-                <a
-                    href="{% url 'menu' table.id %}"
-                    class="btn btn-primary"
+                <div
+                    class="
+                        empty-state
+                        reveal
+                    "
                 >
-                    Browse Menu
-
-                    <span>
-                        →
-                    </span>
-
-                </a>
 
 
-            </div>
+                    <div
+                        class="
+                            empty-state-icon
+                        "
+                    >
+                        🛒
+                    </div>
 
 
-        {% endif %}
+                    <p class="eyebrow">
+                        YOUR ORDER
+                    </p>
 
 
-    </div>
+                    <h2>
+                        Your cart is empty
+                    </h2>
 
 
-</section>
+                    <p>
+                        Add something delicious from our menu
+                        to get started.
+                    </p>
 
 
-{% endblock %}
+                    <a
+                        href="{% url 'menu' table.id %}"
+                        class="btn btn-primary"
+                    >
+                        Browse Menu
+
+                        <span>
+                            →
+                        </span>
+
+                    </a>
+
+
+                </div>
+
+
+            {% endif %}
+
+
+        </div>
+
+
+    </section>
+
+
+    {% endblock %}

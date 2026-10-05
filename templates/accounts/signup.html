@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}
+IDDS | Create Account
+{% endblock %}
+
+{% block content %}
+
+<section class="auth-page">
+
+    <div class="auth-shell">
+
+        <div class="auth-visual" aria-hidden="true">
+
+            <div class="auth-visual-overlay"></div>
+
+            <div class="auth-visual-content">
+
+                <p class="eyebrow">
+                    INTEGRATED DIGITAL DINING
+                </p>
+
+                <h2>
+                    Your dining.
+                    <br>
+                    Your account.
+                </h2>
+
+                <p>
+                    Create your IDDS customer account and keep
+                    your dining experience connected.
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="auth-card">
+
+            <div class="auth-icon">
+                ☕
+            </div>
+
+            <p class="eyebrow">
+                IDDS CUSTOMER
+            </p>
+
+            <h1>
+                Create account
+            </h1>
+
+            <p class="auth-subtitle">
+                Create your account to start your digital dining experience.
+            </p>
+
+            {% if form.non_field_errors %}
+                <div class="message-stack">
+                    {% for error in form.non_field_errors %}
+                        <div class="message error">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post" class="auth-form">
+
+                {% csrf_token %}
+
+                <div class="form-group">
+
+                    <label for="{{ form.username.id_for_label }}">
+                        Username
+                    </label>
+
+                    {{ form.username }}
+
+                    {% for error in form.username.errors %}
+                        <div class="form-error">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="{{ form.email.id_for_label }}">
+                        Email address
+                    </label>
+
+                    {{ form.email }}
+
+                    {% for error in form.email.errors %}
+                        <div class="form-error">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="{{ form.password1.id_for_label }}">
+                        Password
+                    </label>
+
+                    {{ form.password1 }}
+
+                    {% for error in form.password1.errors %}
+                        <div class="form-error">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="{{ form.password2.id_for_label }}">
+                        Confirm password
+                    </label>
+
+                    {{ form.password2 }}
+
+                    {% for error in form.password2.errors %}
+                        <div class="form-error">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary btn-full"
+                >
+                    Create Account
+                    <span aria-hidden="true">→</span>
+                </button>
+
+            </form>
+
+            <div class="auth-links">
+
+                <span>
+                    Already have an account?
+                </span>
+
+                <a href="{% url 'accounts:login' %}">
+                    Sign in
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

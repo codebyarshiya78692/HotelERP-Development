@@ -1,0 +1,465 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Staff Dashboard | IDDS
+{% endblock %}
+
+{% block content %}
+
+<section class="page-section">
+
+    <div class="container">
+
+        <!-- ==================================================
+             HEADER
+             ================================================== -->
+
+        <div class="page-heading reveal">
+
+            <div>
+
+                <p class="eyebrow">
+                    RESTAURANT OPERATIONS
+                </p>
+
+                <h1>
+                    Staff Dashboard
+                </h1>
+
+                <p>
+                    Monitor restaurant operations, orders,
+                    billing, inventory and reports.
+                </p>
+
+            </div>
+
+            <div class="header-actions">
+
+                <a
+                    href="{% url 'accounts:logout' %}"
+                    class="btn btn-secondary"
+                >
+                    Logout
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==================================================
+             QUICK ACTIONS
+             ================================================== -->
+
+        <section class="confirmation-card reveal">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <p class="eyebrow">
+                        MANAGEMENT
+                    </p>
+
+                    <h2>
+                        Quick Actions
+                    </h2>
+
+                    <p>
+                        Access the main restaurant management areas.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-actions-grid">
+
+                <a
+                    href="{% url 'reports:dashboard' %}"
+                    class="dashboard-action-card"
+                >
+
+                    <strong>
+                        Reports
+                    </strong>
+
+                    <span>
+                        View restaurant sales and operational reports.
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="{% url 'inventory:dashboard' %}"
+                    class="dashboard-action-card"
+                >
+
+                    <strong>
+                        Inventory
+                    </strong>
+
+                    <span>
+                        Monitor ingredients and stock movement.
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="{% url 'billing:dashboard' %}"
+                    class="dashboard-action-card"
+                >
+
+                    <strong>
+                        Billing
+                    </strong>
+
+                    <span>
+                        Manage restaurant bills and payments.
+                    </span>
+
+                </a>
+
+
+                <a
+                    href="{% url 'admin:index' %}"
+                    class="dashboard-action-card"
+                >
+
+                    <strong>
+                        Administration
+                    </strong>
+
+                    <span>
+                        Open the Django administration panel.
+                    </span>
+
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================================
+             RECENT ORDERS
+             ================================================== -->
+
+        <section class="confirmation-card reveal">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <p class="eyebrow">
+                        ORDER ACTIVITY
+                    </p>
+
+                    <h2>
+                        Recent Orders
+                    </h2>
+
+                    <p>
+                        Latest restaurant orders and their current status.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            {% if recent_orders %}
+
+                <div class="report-table-wrapper">
+
+                    <table class="report-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Order
+                                </th>
+
+                                <th>
+                                    Table
+                                </th>
+
+                                <th>
+                                    Customer
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Total
+                                </th>
+
+                                <th>
+                                    Created
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for order in recent_orders %}
+
+                                <tr>
+
+                                    <td>
+                                        #{{ order.id }}
+                                    </td>
+
+                                    <td>
+
+                                        {% if order.session and order.session.table %}
+
+                                            Table
+                                            {{ order.session.table.table_number }}
+
+                                        {% else %}
+
+                                            —
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {% if order.session and order.session.customer %}
+
+                                            {{ order.session.customer.username }}
+
+                                        {% else %}
+
+                                            —
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <td>
+                                        {{ order.get_status_display }}
+                                    </td>
+
+
+                                    <td>
+                                        ₹{{ order.total_amount }}
+                                    </td>
+
+
+                                    <td>
+                                        {{ order.created_at|date:"d M Y, h:i A" }}
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <h3>
+                        No recent orders
+                    </h3>
+
+                    <p>
+                        Restaurant orders will appear here.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- ==================================================
+             CUSTOMER REQUESTS
+             ================================================== -->
+
+        <section class="confirmation-card reveal">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <p class="eyebrow">
+                        CUSTOMER SERVICE
+                    </p>
+
+                    <h2>
+                        Recent Customer Requests
+                    </h2>
+
+                    <p>
+                        Monitor service requests handled by restaurant staff.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            {% if recent_requests %}
+
+                <div class="report-table-wrapper">
+
+                    <table class="report-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Table
+                                </th>
+
+                                <th>
+                                    Request
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Waiter
+                                </th>
+
+                                <th>
+                                    Requested
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for service_request in recent_requests %}
+
+                                <tr>
+
+                                    <td>
+
+                                        {% if service_request.session and service_request.session.table %}
+
+                                            Table
+                                            {{ service_request.session.table.table_number }}
+
+                                        {% else %}
+
+                                            —
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <td>
+                                        {{ service_request.get_request_type_display }}
+                                    </td>
+
+
+                                    <td>
+                                        {{ service_request.get_status_display }}
+                                    </td>
+
+
+                                    <td>
+
+                                        {% if service_request.assigned_waiter %}
+
+                                            {{ service_request.assigned_waiter.username }}
+
+                                        {% else %}
+
+                                            Unassigned
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <td>
+                                        {{ service_request.requested_at|date:"d M Y, h:i A" }}
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <h3>
+                        No customer requests
+                    </h3>
+
+                    <p>
+                        New customer service requests will appear here.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- ==================================================
+             FOOTER
+             ================================================== -->
+
+        <div class="dashboard-footer-actions">
+
+            <a
+                href="{% url 'home' %}"
+                class="btn btn-secondary"
+            >
+                Home
+            </a>
+
+            <a
+                href="{% url 'accounts:logout' %}"
+                class="btn btn-secondary"
+            >
+                Logout
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

@@ -1,6 +1,8 @@
+
 from decimal import Decimal
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -16,7 +18,7 @@ from orders.models import DiningSession, Order, OrderItem
 def home(request):
     return render(
         request,
-        "restaurant/home.html"
+        "restaurant/home.html",
     )
 
 
@@ -36,7 +38,7 @@ def table_selection(request):
         "restaurant/table_selection.html",
         {
             "tables": tables,
-        }
+        },
     )
 
 
@@ -44,58 +46,92 @@ def table_selection(request):
 # START DINING SESSION
 # ============================================================
 
+@login_required
+@transaction.atomic
 def start_dining(request, table_id):
+    """
+    Start a dining session for the logged-in customer.
+
+    Guests can SEE tables, but only logged-in customers
+    can actually select a table.
+    """
 
     table = get_object_or_404(
-        DiningTable,
-        id=table_id
+        DiningTable.objects.select_for_update(),
+        id=table_id,
     )
 
+    # Only available/completed tables can be selected.
     if table.status not in ["available", "completed"]:
-
         messages.error(
             request,
-            f"Table {table.table_number} is currently unavailable."
+            f"Table {table.table_number} is currently unavailable.",
         )
-
         return redirect("table_selection")
 
-    active_session = (
+    # If this customer already has an active session at
+    # another table, don't silently create another one.
+    existing_session = (
         DiningSession.objects
         .filter(
-            table=table,
-            status="active"
+            customer_name=request.user.username,
+            status="active",
         )
-        .order_by("-started_at")
+        .select_related("table")
         .first()
     )
 
-    if active_session:
-        session = active_session
+    if existing_session:
+        if existing_session.table_id == table.id:
+            # Reuse the customer's own current session.
+            request.session["dining_session_id"] = existing_session.id
+            request.session["table_id"] = table.id
+            request.session.setdefault("cart", {})
+            request.session.modified = True
 
-    else:
-        session = DiningSession.objects.create(
-            table=table,
-            status="active"
+            return redirect(
+                "menu_for_table",
+                table_id=table.id,
+            )
+
+        messages.warning(
+            request,
+            (
+                f"You already have an active dining session "
+                f"at Table {existing_session.table.table_number}."
+            ),
+        )
+        return redirect(
+            "menu_for_table",
+            table_id=existing_session.table.id,
         )
 
-    table.status = "occupied"
-
-    table.save(
-        update_fields=["status"]
+    # Create a session specifically for this customer.
+    session = DiningSession.objects.create(
+        table=table,
+        customer_name=request.user.username,
+        status="active",
     )
 
+    table.status = "occupied"
+    table.save(
+        update_fields=["status"],
+    )
+
+    # Store the active dining session in the browser session.
     request.session["dining_session_id"] = session.id
     request.session["table_id"] = table.id
-
-    if "cart" not in request.session:
-        request.session["cart"] = {}
-
+    request.session["cart"] = {}
     request.session.modified = True
 
+    messages.success(
+        request,
+        f"Table {table.table_number} selected.",
+    )
+
     return redirect(
-        "menu",
-        table_id=table.id
+        "menu_for_table",
+        table_id=table.id,
     )
 
 
@@ -103,86 +139,146 @@ def start_dining(request, table_id):
 # DIGITAL MENU
 # ============================================================
 
-def menu(request, table_id):
+def menu(request, table_id=None):
+    """
+    Public digital menu.
 
-    table = get_object_or_404(
-        DiningTable,
-        id=table_id
-    )
+    Guests:
+        - can browse the menu
+        - cannot select a table
+        - cannot add items to cart
 
-    session_id = request.session.get(
-        "dining_session_id"
-    )
+    Logged-in customers:
+        - can browse the menu
+        - must have an active dining session before ordering
+    """
 
-    session = None
+    table = None
+    dining_session = None
 
-    if session_id:
+    # --------------------------------------------------------
+    # TABLE INFORMATION
+    # --------------------------------------------------------
 
-        session = (
-            DiningSession.objects
-            .filter(
-                id=session_id,
-                table=table,
-                status="active"
+    if table_id is not None:
+        table = get_object_or_404(
+            DiningTable,
+            id=table_id,
+        )
+
+    # --------------------------------------------------------
+    # CURRENT CUSTOMER SESSION
+    # --------------------------------------------------------
+
+    if request.user.is_authenticated:
+        session_id = request.session.get(
+            "dining_session_id"
+        )
+
+        saved_table_id = request.session.get(
+            "table_id"
+        )
+
+        if session_id and saved_table_id:
+            dining_session = (
+                DiningSession.objects
+                .filter(
+                    id=session_id,
+                    table_id=saved_table_id,
+                    customer_name=request.user.username,
+                    status="active",
+                )
+                .select_related("table")
+                .first()
             )
-            .first()
-        )
 
-    if session is None:
+            # If the saved session is valid and no table was
+            # supplied in the URL, use the customer's table.
+            if dining_session and table is None:
+                table = dining_session.table
 
-        return redirect(
-            "table_selection"
-        )
+            # If the URL contains another table, don't pretend
+            # the customer selected that table.
+            if (
+                dining_session
+                and table is not None
+                and table.id != dining_session.table_id
+            ):
+                dining_session = None
 
-    # Only load categories which actually contain
-    # at least one available menu item.
+    # --------------------------------------------------------
+    # MENU CATEGORIES
+    # --------------------------------------------------------
+
     categories = (
         MenuCategory.objects
         .filter(
-            items__is_available=True
+            items__is_available=True,
         )
-        .prefetch_related(
-            "items"
-        )
+        .prefetch_related("items")
         .distinct()
         .order_by("name")
     )
 
     # --------------------------------------------------------
-    # REAL SESSION CART
+    # MENU ITEMS
     # --------------------------------------------------------
 
-    cart = request.session.get(
-        "cart",
-        {}
+    selected_category = request.GET.get(
+        "category"
     )
 
-    cart_count = sum(
-        int(quantity)
-        for quantity in cart.values()
+    items = (
+        MenuItem.objects
+        .filter(
+            is_available=True,
+        )
+        .select_related("category")
+        .order_by("category__name", "name")
     )
 
-    # Make sure Django creates the CSRF cookie
-    # when the menu page is opened.
-    from django.middleware.csrf import get_token
+    if selected_category:
+        items = items.filter(
+            category_id=selected_category
+        )
 
-    get_token(request)
+    # --------------------------------------------------------
+    # CART
+    # --------------------------------------------------------
+
+    if request.user.is_authenticated:
+        cart = request.session.get(
+            "cart",
+            {}
+        )
+    else:
+        cart = {}
+
+    cart_count = 0
+
+    for quantity in cart.values():
+        try:
+            cart_count += int(quantity)
+        except (TypeError, ValueError):
+            continue
 
     return render(
         request,
         "restaurant/menu.html",
         {
             "table": table,
-            "session": session,
+            "session": dining_session,
             "categories": categories,
-            "cart_count": cart_count,
-
-            # IMPORTANT:
-            # Send the actual Django session cart to menu.html
-            # so the JavaScript knows which items are already
-            # in the cart after a refresh.
+            "items": items,
+            "selected_category": selected_category,
             "cart": cart,
-        }
+            "cart_count": cart_count,
+            "can_order": (
+                request.user.is_authenticated
+                and not request.user.is_staff
+                and dining_session is not None
+            ),
+        },
     )
 
 
@@ -190,76 +286,114 @@ def menu(request, table_id):
 # ADD ITEM TO CART
 # ============================================================
 
+@login_required
 def add_to_cart(request, item_id):
+    """
+    Add a menu item to the current customer's cart.
+
+    A customer must have an active dining session first.
+    """
+
+    if request.user.is_staff:
+        return redirect("admin:index")
 
     if request.method != "POST":
-
-        return JsonResponse(
-            {
-                "success": False,
-                "message": "Invalid request method.",
-            },
-            status=405
-        )
+        return redirect("menu")
 
     item = get_object_or_404(
         MenuItem,
         id=item_id,
-        is_available=True
+        is_available=True,
     )
 
-    if not request.session.get(
+    session_id = request.session.get(
         "dining_session_id"
-    ):
+    )
 
-        return JsonResponse(
-            {
-                "success": False,
-                "message": "Please select a table first.",
-            },
-            status=400
+    table_id = request.session.get(
+        "table_id"
+    )
+
+    customer_session = None
+
+    if session_id and table_id:
+        customer_session = (
+            DiningSession.objects
+            .filter(
+                id=session_id,
+                table_id=table_id,
+                customer_name=request.user.username,
+                status="active",
+            )
+            .first()
         )
 
-    try:
+    # --------------------------------------------------------
+    # NO ACTIVE TABLE
+    # --------------------------------------------------------
 
+    if customer_session is None:
+        request.session.pop(
+            "dining_session_id",
+            None,
+        )
+        request.session.pop(
+            "table_id",
+            None,
+        )
+
+        messages.info(
+            request,
+            "Please select an available table before adding items.",
+        )
+
+        return redirect("table_selection")
+
+    # --------------------------------------------------------
+    # QUANTITY
+    # --------------------------------------------------------
+
+    try:
         quantity = int(
             request.POST.get(
                 "quantity",
-                1
+                1,
             )
         )
-
-    except (
-        TypeError,
-        ValueError
-    ):
-
+    except (TypeError, ValueError):
         quantity = 1
 
     quantity = max(
         1,
-        min(quantity, 20)
+        min(quantity, 20),
     )
+
+    # --------------------------------------------------------
+    # CART
+    # --------------------------------------------------------
 
     cart = request.session.get(
         "cart",
-        {}
+        {},
     )
 
     item_key = str(
         item.id
     )
 
-    current_quantity = int(
-        cart.get(
-            item_key,
-            0
+    try:
+        current_quantity = int(
+            cart.get(
+                item_key,
+                0,
+            )
         )
-    )
+    except (TypeError, ValueError):
+        current_quantity = 0
 
     new_quantity = min(
         current_quantity + quantity,
-        20
+        20,
     )
 
     cart[item_key] = new_quantity
@@ -267,22 +401,14 @@ def add_to_cart(request, item_id):
     request.session["cart"] = cart
     request.session.modified = True
 
-    cart_count = sum(
-        int(value)
-        for value in cart.values()
+    messages.success(
+        request,
+        f"{item.name} added to your cart.",
     )
 
-    return JsonResponse(
-        {
-            "success": True,
-            "message": f"{item.name} added to cart.",
-            "cart_count": cart_count,
-
-            # Return the actual quantity as well.
-            # This lets the menu stay synchronized with
-            # the server-side cart.
-            "quantity": new_quantity,
-        }
+    return redirect(
+        request.POST.get("next")
+        or "cart"
     )
 
 
@@ -290,7 +416,17 @@ def add_to_cart(request, item_id):
 # CART
 # ============================================================
 
+@login_required
 def cart(request):
+    """
+    Display the current customer's cart.
+
+    Invalid/stale dining sessions are cleared instead
+    of causing a Django 404.
+    """
+
+    if request.user.is_staff:
+        return redirect("admin:index")
 
     session_id = request.session.get(
         "dining_session_id"
@@ -301,46 +437,73 @@ def cart(request):
     )
 
     if not session_id or not table_id:
+        messages.info(
+            request,
+            "Please select a table before opening your cart.",
+        )
+        return redirect("table_selection")
 
-        return redirect(
-            "table_selection"
+    dining_session = (
+        DiningSession.objects
+        .filter(
+            id=session_id,
+            table_id=table_id,
+            customer_name=request.user.username,
+            status="active",
+        )
+        .select_related("table")
+        .first()
+    )
+
+    # --------------------------------------------------------
+    # STALE SESSION RECOVERY
+    # --------------------------------------------------------
+
+    if dining_session is None:
+        request.session.pop(
+            "dining_session_id",
+            None,
+        )
+        request.session.pop(
+            "table_id",
+            None,
+        )
+        request.session["cart"] = {}
+        request.session.modified = True
+
+        messages.info(
+            request,
+            "Your previous dining session is no longer active. Please select a table.",
         )
 
-    session = get_object_or_404(
-        DiningSession.objects.select_related("table"),
-        id=session_id,
-        table_id=table_id,
-        status="active"
-    )
+        return redirect("table_selection")
+
+    # --------------------------------------------------------
+    # READ CART
+    # --------------------------------------------------------
 
     cart_data = request.session.get(
         "cart",
-        {}
+        {},
     )
 
     item_ids = []
 
     for item_id in cart_data.keys():
-
         try:
-
             item_ids.append(
                 int(item_id)
             )
-
-        except (
-            TypeError,
-            ValueError
-        ):
-
+        except (TypeError, ValueError):
             continue
 
     menu_items = (
         MenuItem.objects
         .filter(
             id__in=item_ids,
-            is_available=True
+            is_available=True,
         )
+        .select_related("category")
     )
 
     item_map = {
@@ -350,12 +513,9 @@ def cart(request):
 
     cart_items = []
 
-    subtotal = Decimal(
-        "0.00"
-    )
+    subtotal = Decimal("0.00")
 
     for item_id, quantity in cart_data.items():
-
         item = item_map.get(
             str(item_id)
         )
@@ -363,9 +523,14 @@ def cart(request):
         if not item:
             continue
 
+        try:
+            quantity = int(quantity)
+        except (TypeError, ValueError):
+            continue
+
         quantity = max(
             1,
-            int(quantity)
+            min(quantity, 20),
         )
 
         item_total = (
@@ -386,11 +551,11 @@ def cart(request):
         request,
         "restaurant/cart.html",
         {
-            "session": session,
-            "table": session.table,
+            "session": dining_session,
+            "table": dining_session.table,
             "cart_items": cart_items,
             "subtotal": subtotal,
-        }
+        },
     )
 
 
@@ -398,17 +563,39 @@ def cart(request):
 # UPDATE CART
 # ============================================================
 
+@login_required
 def update_cart(request, item_id):
+    if request.user.is_staff:
+        return redirect("admin:index")
 
     if request.method != "POST":
+        return redirect("cart")
 
-        return JsonResponse(
-            {
-                "success": False,
-                "message": "Invalid request method.",
-            },
-            status=405
+    session_id = request.session.get(
+        "dining_session_id"
+    )
+
+    table_id = request.session.get(
+        "table_id"
+    )
+
+    valid_session = (
+        session_id
+        and table_id
+        and DiningSession.objects.filter(
+            id=session_id,
+            table_id=table_id,
+            customer_name=request.user.username,
+            status="active",
+        ).exists()
+    )
+
+    if not valid_session:
+        messages.info(
+            request,
+            "Please select a table before updating your cart.",
         )
+        return redirect("table_selection")
 
     cart = request.session.get(
         "cart",
@@ -420,121 +607,98 @@ def update_cart(request, item_id):
     )
 
     if item_key not in cart:
-
-        return JsonResponse(
-            {
-                "success": False,
-                "message": "Item is not in your cart.",
-            },
-            status=404
+        messages.warning(
+            request,
+            "That item is not in your cart.",
         )
+        return redirect("cart")
 
     try:
-
         quantity = int(
             request.POST.get(
                 "quantity",
-                1
+                1,
             )
         )
-
-    except (
-        TypeError,
-        ValueError
-    ):
-
+    except (TypeError, ValueError):
         quantity = 1
 
-    # --------------------------------------------------------
-    # REMOVE ITEM
-    # --------------------------------------------------------
-
     if quantity <= 0:
-
         cart.pop(
             item_key,
-            None
+            None,
         )
-
-        new_quantity = 0
-
-    # --------------------------------------------------------
-    # UPDATE QUANTITY
-    # --------------------------------------------------------
-
     else:
-
-        new_quantity = min(
+        cart[item_key] = min(
             quantity,
-            20
+            20,
         )
-
-        cart[item_key] = new_quantity
 
     request.session["cart"] = cart
     request.session.modified = True
 
-    cart_count = sum(
-        int(value)
-        for value in cart.values()
-    )
-
-    # --------------------------------------------------------
-    # MENU AJAX REQUEST
-    # --------------------------------------------------------
-
-    # The menu's + / - JavaScript sends X-Requested-With.
-    # Return JSON so it does not navigate away from the menu.
-    if request.headers.get(
-        "X-Requested-With"
-    ) == "XMLHttpRequest":
-
-        return JsonResponse(
-            {
-                "success": True,
-                "quantity": new_quantity,
-                "cart_count": cart_count,
-                "removed": new_quantity == 0,
-            }
-        )
-
-    # --------------------------------------------------------
-    # NORMAL CART FORM REQUEST
-    # --------------------------------------------------------
-
-    return redirect(
-        "cart"
-    )
+    return redirect("cart")
 
 
 # ============================================================
 # PLACE ORDER
 # ============================================================
 
+@login_required
 @transaction.atomic
 def place_order(request):
+    if request.user.is_staff:
+        return redirect("admin:index")
 
     if request.method != "POST":
-
-        return redirect(
-            "cart"
-        )
+        return redirect("cart")
 
     session_id = request.session.get(
         "dining_session_id"
     )
 
-    if not session_id:
+    table_id = request.session.get(
+        "table_id"
+    )
 
-        return redirect(
-            "table_selection"
+    if not session_id or not table_id:
+        messages.info(
+            request,
+            "Please select a table before placing your order.",
+        )
+        return redirect("table_selection")
+
+    dining_session = (
+        DiningSession.objects
+        .select_for_update()
+        .select_related("table")
+        .filter(
+            id=session_id,
+            table_id=table_id,
+            customer_name=request.user.username,
+            status="active",
+        )
+        .first()
+    )
+
+    if dining_session is None:
+        request.session.pop(
+            "dining_session_id",
+            None,
+        )
+        request.session.pop(
+            "table_id",
+            None,
+        )
+        request.session["cart"] = {}
+        request.session.modified = True
+
+        messages.info(
+            request,
+            "Your dining session is no longer active. Please select a table.",
         )
 
-    session = get_object_or_404(
-        DiningSession.objects.select_related("table"),
-        id=session_id,
-        status="active"
-    )
+        return redirect("table_selection")
 
     cart_data = request.session.get(
         "cart",
@@ -542,53 +706,36 @@ def place_order(request):
     )
 
     if not cart_data:
-
         messages.error(
             request,
-            "Your cart is empty."
+            "Your cart is empty.",
         )
-
-        return redirect(
-            "cart"
-        )
+        return redirect("cart")
 
     special_instructions = (
         request.POST
         .get(
             "special_instructions",
-            ""
+            "",
         )
         .strip()
-    )
-
-    order = Order.objects.create(
-        session=session,
-        status="new",
-        special_instructions=special_instructions
     )
 
     item_ids = []
 
     for item_id in cart_data.keys():
-
         try:
-
             item_ids.append(
                 int(item_id)
             )
-
-        except (
-            TypeError,
-            ValueError
-        ):
-
+        except (TypeError, ValueError):
             continue
 
     menu_items = (
         MenuItem.objects
         .filter(
             id__in=item_ids,
-            is_available=True
+            is_available=True,
         )
     )
 
@@ -597,21 +744,13 @@ def place_order(request):
         for item in menu_items
     }
 
-    valid_item_count = 0
+    valid_items = []
 
     for item_id, quantity in cart_data.items():
-
         try:
-
-            numeric_item_id = int(
-                item_id
-            )
-
-        except (
-            TypeError,
-            ValueError
-        ):
-
+            numeric_item_id = int(item_id)
+            quantity = int(quantity)
+        except (TypeError, ValueError):
             continue
 
         menu_item = item_map.get(
@@ -623,51 +762,56 @@ def place_order(request):
 
         quantity = max(
             1,
-            int(quantity)
+            min(quantity, 20),
         )
 
+        valid_items.append(
+            (
+                menu_item,
+                quantity,
+            )
+        )
+
+    if not valid_items:
+        messages.error(
+            request,
+            "None of the selected menu items are currently available.",
+        )
+        return redirect("cart")
+
+    order = Order.objects.create(
+        session=dining_session,
+        status="new",
+        special_instructions=special_instructions,
+    )
+
+    for menu_item, quantity in valid_items:
         OrderItem.objects.create(
             order=order,
             menu_item=menu_item,
             item_name=menu_item.name,
             unit_price=menu_item.price,
-            quantity=quantity
+            quantity=quantity,
         )
 
-        valid_item_count += 1
+    dining_session.table.status = "order_in_progress"
 
-    if valid_item_count == 0:
-
-        order.delete()
-
-        messages.error(
-            request,
-            "None of the selected menu items are currently available."
-        )
-
-        return redirect(
-            "cart"
-        )
-
-    table = session.table
-
-    table.status = "order_in_progress"
-
-    table.save(
-        update_fields=["status"]
+    dining_session.table.save(
+        update_fields=["status"],
     )
 
-    # Clear the customer's cart after the order
-    # has been successfully created.
     request.session["cart"] = {}
-
     request.session["last_order_id"] = order.id
-
     request.session.modified = True
+
+    messages.success(
+        request,
+        f"Order #{order.id} has been placed successfully.",
+    )
 
     return redirect(
         "order_confirmation",
-        order_id=order.id
+        order_id=order.id,
     )
 
 
@@ -675,7 +819,10 @@ def place_order(request):
 # ORDER CONFIRMATION
 # ============================================================
 
+@login_required
 def order_confirmation(request, order_id):
+    if request.user.is_staff:
+        return redirect("admin:index")
 
     session_id = request.session.get(
         "dining_session_id"
@@ -683,14 +830,11 @@ def order_confirmation(request, order_id):
 
     order = get_object_or_404(
         Order.objects
-        .select_related(
-            "session__table"
-        )
-        .prefetch_related(
-            "items"
-        ),
+        .select_related("session__table")
+        .prefetch_related("items"),
         id=order_id,
-        session_id=session_id
+        session_id=session_id,
+        session__customer_name=request.user.username,
     )
 
     return render(
@@ -699,7 +843,7 @@ def order_confirmation(request, order_id):
         {
             "order": order,
             "session": order.session,
-        }
+        },
     )
 
 
@@ -707,47 +851,43 @@ def order_confirmation(request, order_id):
 # ORDER TRACKING
 # ============================================================
 
+@login_required
 def order_tracking(request, order_id):
+    if request.user.is_staff:
+        return redirect("admin:index")
 
-    # The tracking URL contains the order ID itself.
-    # Do not require the browser's current dining_session_id
-    # to match the order. That session can change when the
-    # customer refreshes, switches roles, or returns later.
     order = get_object_or_404(
         Order.objects
-        .select_related(
-            "session__table"
-        )
-        .prefetch_related(
-            "items"
-        ),
-        id=order_id
+        .select_related("session__table")
+        .prefetch_related("items"),
+        id=order_id,
+        session__customer_name=request.user.username,
     )
 
     status_steps = [
         (
             "new",
-            "Order Received"
+            "Order Received",
         ),
         (
             "accepted",
-            "Accepted by Kitchen"
+            "Accepted by Kitchen",
         ),
         (
             "preparing",
-            "Preparing"
+            "Preparing",
         ),
         (
             "ready",
-            "Ready"
+            "Ready",
         ),
         (
             "served",
-            "Served"
+            "Served",
         ),
         (
             "completed",
-            "Completed"
+            "Completed",
         ),
     ]
 
@@ -761,13 +901,10 @@ def order_tracking(request, order_id):
     ]
 
     if order.status in status_order:
-
         current_index = status_order.index(
             order.status
         )
-
     else:
-
         current_index = 0
 
     return render(
@@ -777,5 +914,6 @@ def order_tracking(request, order_id):
             "order": order,
             "status_steps": status_steps,
             "current_index": current_index,
-        }
+        },
     )
+

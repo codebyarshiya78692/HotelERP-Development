@@ -38,20 +38,61 @@ IDDS | Integrated Digital Dining System
 
             <div class="hero-actions">
 
-                <a
-                    href="{% url 'table_selection' %}"
-                    class="btn btn-primary"
-                >
-                    Start Dining
-                </a>
+                {% if user.is_authenticated and not user.is_staff %}
 
+                    <a
+                        href="{% url 'accounts:dashboard' %}"
+                        class="btn btn-primary"
+                    >
+                        My Dashboard
+                    </a>
 
-                <a
-                    href="{% url 'table_selection' %}"
-                    class="text-link"
-                >
-                    Explore the experience →
-                </a>
+                    <a
+                        href="{% url 'table_selection' %}"
+                        class="text-link"
+                    >
+                        Start Dining →
+                    </a>
+
+                {% elif user.is_staff %}
+
+                    <a
+                        href="/admin/"
+                        class="btn btn-primary"
+                    >
+                        Staff Workspace
+                    </a>
+
+                    <a
+                        href="{% url 'table_selection' %}"
+                        class="text-link"
+                    >
+                        View Dining Experience →
+                    </a>
+
+                {% else %}
+
+                    <a
+                        href="{% url 'accounts:login' %}"
+                        class="btn btn-primary"
+                    >
+                        Customer Login
+                    </a>
+
+                    <a
+                        href="{% url 'accounts:signup' %}"
+                        class="text-link"
+                    >
+                        Create an Account →
+                    </a>
+                    <a 
+                        href="/restaurant/menu/" 
+                        class="text-link" 
+                    > 
+                        View Menu →
+                    </a>
+
+                {% endif %}
 
             </div>
 
@@ -248,12 +289,34 @@ IDDS | Integrated Digital Dining System
             </p>
 
 
-            <a
-                href="{% url 'table_selection' %}"
-                class="btn btn-primary"
-            >
-                Choose a Table
-            </a>
+            {% if user.is_authenticated and not user.is_staff %}
+
+                <a
+                    href="{% url 'table_selection' %}"
+                    class="btn btn-primary"
+                >
+                    Choose a Table
+                </a>
+
+            {% elif user.is_authenticated and user.is_staff %}
+
+                <a
+                    href="/admin/"
+                    class="btn btn-primary"
+                >
+                    Open Staff Workspace
+                </a>
+
+            {% else %}
+
+                <a
+                    href="{% url 'accounts:login' %}"
+                    class="btn btn-primary"
+                >
+                    Customer Login
+                </a>
+
+            {% endif %}
 
         </div>
 

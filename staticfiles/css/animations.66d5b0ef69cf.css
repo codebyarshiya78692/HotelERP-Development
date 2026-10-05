@@ -1,0 +1,70 @@
+/* =========================================================
+   IDDS ANIMATIONS
+   ========================================================= */
+
+.reveal {
+    opacity: 0;
+    transform: translateY(24px);
+
+    transition:
+        opacity 700ms ease,
+        transform 700ms cubic-bezier(.2,.7,.2,1);
+}
+
+.reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+/* stagger cards naturally */
+
+.menu-grid .reveal:nth-child(2),
+.table-grid .reveal:nth-child(2) {
+    transition-delay: 80ms;
+}
+
+.menu-grid .reveal:nth-child(3),
+.table-grid .reveal:nth-child(3) {
+    transition-delay: 160ms;
+}
+
+.menu-grid .reveal:nth-child(4),
+.table-grid .reveal:nth-child(4) {
+    transition-delay: 240ms;
+}
+
+.menu-grid .reveal:nth-child(5),
+.table-grid .reveal:nth-child(5) {
+    transition-delay: 320ms;
+}
+
+.menu-grid .reveal:nth-child(6),
+.table-grid .reveal:nth-child(6) {
+    transition-delay: 400ms;
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .reveal {
+        opacity: 1;
+        transform: none;
+    }
+}

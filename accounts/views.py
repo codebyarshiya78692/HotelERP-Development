@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.urls import reverse
 from django.utils import timezone
 
@@ -80,8 +81,7 @@ def _staff_role(user):
     if "waiter" in username:
         return "waiter"
 
-    if user.is_staff:
-        return "staff"
+
 
     return "customer"
 
@@ -96,8 +96,14 @@ def customer_login(request):
     Unified login page.
 
     Customers, chefs and waiters all use the same login form.
-    The user's role determines the dashboard after successful login.
+    After successful customer login, return to the page that
+    originally required authentication.
     """
+
+    next_url = (
+        request.POST.get("next")
+        or request.GET.get("next")
+    )
 
     if request.user.is_authenticated:
         role = _staff_role(request.user)
@@ -108,23 +114,41 @@ def customer_login(request):
         if role == "waiter":
             return redirect("accounts:waiter_dashboard")
 
-        if role in ("admin", "staff"):
-            return redirect("accounts:staff_dashboard")
+        if role == "admin":
+            return redirect("/admin/")
+
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+        ):
+            return redirect(next_url)
 
         return redirect("accounts:dashboard")
 
     if request.method == "POST":
-        username = request.POST.get("username", "").strip()
-        password = request.POST.get("password", "")
+
+        username = request.POST.get(
+            "username",
+            ""
+        ).strip()
+
+        password = request.POST.get(
+            "password",
+            ""
+        )
 
         if not username or not password:
             messages.error(
                 request,
                 "Please enter both username and password.",
             )
+
             return render(
                 request,
                 "accounts/login.html",
+                {
+                    "next": next_url,
+                },
             )
 
         user = authenticate(
@@ -138,9 +162,13 @@ def customer_login(request):
                 request,
                 "Invalid username or password.",
             )
+
             return render(
                 request,
                 "accounts/login.html",
+                {
+                    "next": next_url,
+                },
             )
 
         if not user.is_active:
@@ -148,9 +176,13 @@ def customer_login(request):
                 request,
                 "This account is inactive.",
             )
+
             return render(
                 request,
                 "accounts/login.html",
+                {
+                    "next": next_url,
+                },
             )
 
         login(request, user)
@@ -163,16 +195,27 @@ def customer_login(request):
         if role == "waiter":
             return redirect("accounts:waiter_dashboard")
 
-        if role in ("admin", "staff"):
-            return redirect("accounts:staff_dashboard")
+        if role == "admin":
+            return redirect("/admin/")
+
+        # IMPORTANT:
+        # Return the customer to the URL that originally
+        # required login.
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+        ):
+            return redirect(next_url)
 
         return redirect("accounts:dashboard")
 
     return render(
         request,
         "accounts/login.html",
+        {
+            "next": next_url,
+        },
     )
-
 
 @login_required
 def customer_logout(request):
@@ -210,18 +253,17 @@ def dashboard(request):
     if role == "waiter":
         return redirect("accounts:waiter_dashboard")
 
-    if role in ("admin", "staff"):
-        return redirect("accounts:staff_dashboard")
+    if role == "admin":
+        return redirect("/admin/")
 
     tables = (
         DiningTable.objects
-        .filter(is_available=True)
+        .filter(status="available")
         .order_by("table_number")
     )
 
     categories = (
         MenuCategory.objects
-        .filter(is_active=True)
         .prefetch_related("items")
         .order_by("name")
     )
@@ -236,23 +278,32 @@ def dashboard(request):
     active_session = (
         DiningSession.objects
         .filter(
-            customer=request.user,
+            customer_name=request.user.username,
             status__in=["active", "occupied", "open"],
         )
         .select_related("table")
-        .order_by("-created_at")
+        .order_by("-started_at")
         .first()
     )
 
-    recent_orders = (
+    customer_orders = (
         Order.objects
-        .filter(session__customer=request.user)
+        .filter(session__customer_name=request.user.username)
         .select_related(
             "session",
             "session__table",
         )
         .prefetch_related("items")
-        .order_by("-created_at")[:10]
+        .order_by("-created_at")
+    )
+
+    recent_orders = customer_orders[:10]
+
+    cart = request.session.get("cart", {})
+    cart_count = sum(
+        int(quantity)
+        for quantity in cart.values()
+        if str(quantity).isdigit()
     )
 
     context = {
@@ -261,6 +312,8 @@ def dashboard(request):
         "menu_items": menu_items,
         "active_session": active_session,
         "recent_orders": recent_orders,
+        "order_count": customer_orders.count(),
+        "cart_count": cart_count,
     }
 
     return render(
@@ -752,7 +805,7 @@ def _get_customer_active_session(user):
     return (
         DiningSession.objects
         .filter(
-            customer=user,
+            customer_name=user.username,
             status__in=[
                 "active",
                 "occupied",
@@ -760,7 +813,7 @@ def _get_customer_active_session(user):
             ],
         )
         .select_related("table")
-        .order_by("-created_at")
+        .order_by("-started_at")
         .first()
     )
 
@@ -773,7 +826,7 @@ def _get_customer_order_queryset(user):
     return (
         Order.objects
         .filter(
-            session__customer=user,
+            session__customer_name=user.username,
         )
         .select_related(
             "session",
@@ -820,7 +873,7 @@ def start_session(request, table_id):
         )
         return redirect("accounts:dashboard")
 
-    if not table.is_available:
+    if table.status != "available":
         messages.error(
             request,
             "This table is currently unavailable.",
@@ -828,18 +881,26 @@ def start_session(request, table_id):
         return redirect("accounts:dashboard")
 
     session = DiningSession.objects.create(
-        customer=request.user,
+        customer_name=request.user.username,
         table=table,
         status="active",
     )
 
-    table.is_available = False
+    table.status = "order_in_progress"
 
     table.save(
         update_fields=[
-            "is_available",
+            "status",
         ]
     )
+
+    # Keep the selected dining session in the browser session so
+    # the public menu, cart and order flow can identify the
+    # customer's active table.
+    request.session["dining_session_id"] = session.id
+    request.session["table_id"] = table.id
+    request.session["cart"] = {}
+    request.session.modified = True
 
     messages.success(
         request,
@@ -847,7 +908,8 @@ def start_session(request, table_id):
     )
 
     return redirect(
-        "accounts:dashboard"
+        "restaurant:menu_for_table",
+        table_id=table.id,
     )
 
 
@@ -857,14 +919,13 @@ def start_session(request, table_id):
 
 
 @login_required
-def menu(request):
+def menu(request, table_id=None):
     """
     Display the digital restaurant menu.
     """
 
     categories = (
         MenuCategory.objects
-        .filter(is_active=True)
         .prefetch_related("items")
         .order_by("name")
     )
@@ -1014,7 +1075,7 @@ def create_service_request(request):
     ServiceRequest.objects.create(
         session=session,
         request_type=request_type,
-        description=description,
+        message=description,
         status="requested",
     )
 
@@ -1060,7 +1121,7 @@ def cancel_order(request, order_id):
     order = get_object_or_404(
         Order.objects.select_for_update(),
         pk=order_id,
-        session__customer=request.user,
+        session__customer_name=request.user.username,
     )
 
     cancellable_statuses = [
@@ -1108,7 +1169,7 @@ def available_tables(request):
 
     tables = (
         DiningTable.objects
-        .filter(is_available=True)
+        .filter(status="available")
         .order_by("table_number")
     )
 
@@ -1118,7 +1179,7 @@ def available_tables(request):
 
     return render(
         request,
-        "restaurant/tables.html",
+        "restaurant/table_selection.html",
         context,
     )
 
@@ -1187,8 +1248,8 @@ def role_dashboard(request):
     if role == "waiter":
         return redirect("accounts:waiter_dashboard")
 
-    if role in ("admin", "staff"):
-        return redirect("accounts:staff_dashboard")
+    if role == "admin":
+        return redirect("/admin/")
 
     return redirect("accounts:dashboard")
 
@@ -1238,7 +1299,7 @@ def track_order(request, order_id):
         )
         .prefetch_related("items"),
         pk=order_id,
-        session__customer=request.user,
+        session__customer_name=request.user.username,
     )
 
     context = {
@@ -1266,7 +1327,7 @@ def my_service_requests(request):
     active_requests = (
         ServiceRequest.objects
         .filter(
-            session__customer=request.user,
+            session__customer_name=request.user.username,
         )
         .select_related(
             "session",
@@ -1335,7 +1396,7 @@ def close_session(request, session_id):
     session = get_object_or_404(
         DiningSession.objects.select_for_update(),
         pk=session_id,
-        customer=request.user,
+        customer_name=request.user.username,
     )
 
     if session.status not in [
@@ -1358,11 +1419,11 @@ def close_session(request, session_id):
     )
 
     if session.table:
-        session.table.is_available = True
+        session.table.status = "available"
 
         session.table.save(
             update_fields=[
-                "is_available",
+                "status",
             ]
         )
 
@@ -1495,7 +1556,7 @@ def order_summary(request, order_id):
         )
         .prefetch_related("items"),
         pk=order_id,
-        session__customer=request.user,
+        session__customer_name=request.user.username,
     )
 
     context = {
@@ -1528,7 +1589,7 @@ def feedback_redirect(request, order_id):
             "session",
         ),
         pk=order_id,
-        session__customer=request.user,
+        session__customer_name=request.user.username,
     )
 
     session_id = order.session_id
@@ -1562,8 +1623,8 @@ def home(request):
     if role == "waiter":
         return redirect("accounts:waiter_dashboard")
 
-    if role in ("admin", "staff"):
-        return redirect("accounts:staff_dashboard")
+    if role == "admin":
+        return redirect("/admin/")
 
     return redirect("accounts:dashboard")
 
@@ -1571,3 +1632,6 @@ def home(request):
 # ============================================================
 # END OF ACCOUNTS VIEWS
 # ============================================================
+
+
+    

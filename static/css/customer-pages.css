@@ -1,0 +1,515 @@
+/* ============================================================
+   IDDS CUSTOMER PAGES
+   Home + My Orders + Service Requests
+   ============================================================ */
+
+:root {
+    --customer-bg: #f7f3ed;
+    --customer-surface: #fffdf9;
+    --customer-dark: #2d241e;
+    --customer-muted: #776c63;
+    --customer-brown: #76553d;
+    --customer-brown-dark: #5d412e;
+    --customer-gold: #b88b58;
+    --customer-border: #e6ddd2;
+}
+
+
+/* ============================================================
+   COMMON PAGE CONTAINER
+   ============================================================ */
+
+.customer-page,
+.page-header,
+.section,
+.hero {
+    box-sizing: border-box;
+}
+
+
+/* ============================================================
+   HOME PAGE
+   ============================================================ */
+
+.hero {
+    min-height: 680px;
+    padding: 90px 0;
+    background:
+        radial-gradient(
+            circle at 85% 25%,
+            rgba(184, 139, 88, 0.18),
+            transparent 30%
+        ),
+        var(--customer-bg);
+}
+
+.hero-grid {
+    width: min(1180px, 90%);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 70px;
+    align-items: center;
+}
+
+.hero-copy {
+    max-width: 720px;
+}
+
+.hero-copy .eyebrow {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: var(--customer-brown);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+}
+
+.hero-copy h1 {
+    margin: 0 0 24px;
+    color: var(--customer-dark);
+    font-size: clamp(3.2rem, 6vw, 6rem);
+    line-height: 0.95;
+    letter-spacing: -0.045em;
+}
+
+.hero-text {
+    max-width: 580px;
+    margin-bottom: 32px;
+    color: var(--customer-muted);
+    font-size: 1.08rem;
+    line-height: 1.8;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.hero-card {
+    padding: 42px;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background: var(--customer-brown);
+    color: white;
+    border-radius: 28px;
+    box-shadow: 0 25px 60px rgba(54, 39, 28, 0.14);
+}
+
+.hero-card span {
+    margin-bottom: 14px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    opacity: 0.75;
+}
+
+.hero-card strong {
+    display: block;
+    margin-bottom: 14px;
+    font-size: 2rem;
+    line-height: 1.15;
+}
+
+.hero-card p {
+    margin: 0;
+    color: rgba(255,255,255,0.78);
+    line-height: 1.7;
+}
+
+
+/* ============================================================
+   HOME MENU PREVIEW
+   ============================================================ */
+
+.section {
+    padding: 90px 0;
+    background: var(--customer-bg);
+}
+
+.section-tight {
+    padding-top: 40px;
+}
+
+.section > .container,
+.section-heading,
+.page-header > .container {
+    width: min(1180px, 90%);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.section-heading {
+    margin-bottom: 35px;
+}
+
+.section-heading h2 {
+    margin: 0;
+    color: var(--customer-dark);
+    font-size: clamp(2rem, 4vw, 3.2rem);
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.menu-card {
+    padding: 26px;
+    background: var(--customer-surface);
+    border: 1px solid var(--customer-border);
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(54, 39, 28, 0.05);
+}
+
+.menu-card-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 18px;
+}
+
+.category-label {
+    color: var(--customer-brown);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.price {
+    color: var(--customer-dark);
+    font-weight: 800;
+}
+
+.menu-card h3 {
+    margin: 0 0 10px;
+    color: var(--customer-dark);
+    font-size: 1.3rem;
+}
+
+.menu-card p {
+    margin: 0;
+    color: var(--customer-muted);
+    line-height: 1.7;
+}
+
+
+/* ============================================================
+   PAGE HEADER
+   ============================================================ */
+
+.page-header {
+    padding: 75px 0 50px;
+    background: var(--customer-bg);
+}
+
+.page-header .eyebrow {
+    margin-bottom: 12px;
+}
+
+.page-header h1 {
+    margin: 0 0 12px;
+    color: var(--customer-dark);
+    font-size: clamp(2.7rem, 5vw, 4.5rem);
+    line-height: 1;
+    letter-spacing: -0.035em;
+}
+
+.page-header p:not(.eyebrow) {
+    margin: 0;
+    color: var(--customer-muted);
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+
+/* ============================================================
+   MY ORDERS
+   ============================================================ */
+
+.order-list {
+    width: min(900px, 100%);
+    margin: 0 auto;
+    display: grid;
+    gap: 16px;
+}
+
+.order-card,
+.order-row {
+    box-sizing: border-box;
+}
+
+.order-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 25px;
+    padding: 24px 28px;
+    background: var(--customer-surface);
+    border: 1px solid var(--customer-border);
+    border-radius: 20px;
+    text-decoration: none;
+    box-shadow: 0 10px 30px rgba(54, 39, 28, 0.05);
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.order-card:hover {
+    transform: translateY(-3px);
+    border-color: #d5c4b3;
+    box-shadow: 0 18px 38px rgba(54, 39, 28, 0.09);
+}
+
+.order-card > div:first-child {
+    display: grid;
+    gap: 7px;
+}
+
+.order-card strong {
+    color: var(--customer-dark);
+    font-size: 1.1rem;
+}
+
+.order-card span {
+    color: var(--customer-muted);
+    font-size: 0.88rem;
+}
+
+.order-row-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.order-row-right strong {
+    white-space: nowrap;
+}
+
+
+/* ============================================================
+   STATUS
+   ============================================================ */
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(184, 139, 88, 0.14);
+    color: var(--customer-brown-dark);
+    font-size: 0.75rem !important;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+
+.empty-state {
+    width: min(720px, 100%);
+    margin: 20px auto;
+    padding: 70px 30px;
+    text-align: center;
+    background: var(--customer-surface);
+    border: 1px solid var(--customer-border);
+    border-radius: 24px;
+    box-shadow: 0 12px 30px rgba(54, 39, 28, 0.05);
+}
+
+.empty-state h2,
+.empty-state h3 {
+    margin: 0 0 12px;
+    color: var(--customer-dark);
+    font-size: 1.8rem;
+}
+
+.empty-state p {
+    margin: 0 auto 25px;
+    max-width: 480px;
+    color: var(--customer-muted);
+    line-height: 1.7;
+}
+
+
+/* ============================================================
+   SERVICE REQUESTS
+   ============================================================ */
+
+.service-page {
+    min-height: 650px;
+    padding: 70px 0 100px;
+    background: var(--customer-bg);
+}
+
+.service-container {
+    width: min(1100px, 90%);
+    margin: 0 auto;
+}
+
+.service-heading {
+    margin-bottom: 35px;
+}
+
+.service-heading h1 {
+    margin: 0 0 12px;
+    color: var(--customer-dark);
+    font-size: clamp(2.7rem, 5vw, 4.3rem);
+    line-height: 1;
+    letter-spacing: -0.035em;
+}
+
+.service-heading p {
+    max-width: 650px;
+    margin: 0;
+    color: var(--customer-muted);
+    line-height: 1.7;
+}
+
+.service-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 45px;
+}
+
+.service-summary-card {
+    padding: 22px;
+    background: var(--customer-surface);
+    border: 1px solid var(--customer-border);
+    border-radius: 18px;
+}
+
+.service-summary-card span {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--customer-muted);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.service-summary-card strong {
+    color: var(--customer-dark);
+    font-size: 2rem;
+}
+
+.service-list {
+    display: grid;
+    gap: 16px;
+}
+
+.service-card {
+    padding: 25px 28px;
+    background: var(--customer-surface);
+    border: 1px solid var(--customer-border);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(54, 39, 28, 0.05);
+}
+
+.service-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.service-card h2 {
+    margin: 0 0 8px;
+    color: var(--customer-dark);
+    font-size: 1.35rem;
+}
+
+.service-table {
+    color: var(--customer-muted);
+    font-size: 0.9rem;
+}
+
+.service-message {
+    margin-top: 18px;
+    padding: 14px 16px;
+    background: var(--customer-bg);
+    border-left: 3px solid var(--customer-gold);
+    border-radius: 10px;
+    color: var(--customer-muted);
+    line-height: 1.6;
+}
+
+.service-date {
+    display: block;
+    margin-top: 18px;
+    padding-top: 15px;
+    border-top: 1px solid var(--customer-border);
+    color: var(--customer-muted);
+    font-size: 0.8rem;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+    .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 35px;
+    }
+
+    .menu-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .service-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+@media (max-width: 650px) {
+
+    .hero {
+        padding: 65px 0;
+    }
+
+    .hero-copy h1 {
+        font-size: 3.2rem;
+    }
+
+    .hero-card {
+        min-height: 220px;
+        padding: 28px;
+    }
+
+    .menu-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .order-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .order-row-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .service-card-top {
+        flex-direction: column;
+    }
+
+    .page-header {
+        padding: 55px 0 35px;
+    }
+}

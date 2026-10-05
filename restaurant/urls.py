@@ -1,3 +1,4 @@
+
 from django.urls import path
 
 from . import table_views, views, service_views
@@ -7,6 +8,7 @@ app_name = "restaurant"
 
 
 urlpatterns = [
+
     # ============================================================
     # MENU
     # ============================================================
@@ -17,15 +19,41 @@ urlpatterns = [
         name="menu",
     ),
 
+    path(
+        "menu/<int:table_id>/",
+        views.menu,
+        name="menu_for_table",
+    ),
+
+    path(
+        "menu/add/<int:item_id>/",
+        views.add_to_cart,
+        name="add_to_cart",
+    ),
+
+
     # ============================================================
     # TABLE MANAGEMENT
     # ============================================================
+
+    path(
+        "tables/",
+        views.table_selection,
+        name="table_selection",
+    ),
+
+    path(
+        "dining/start/<int:table_id>/",
+        views.start_dining,
+        name="start_dining",
+    ),
 
     path(
         "tables/<int:table_id>/release/",
         table_views.release_table_view,
         name="release_table",
     ),
+
 
     # ============================================================
     # CUSTOMER SERVICE REQUESTS
@@ -42,6 +70,7 @@ urlpatterns = [
         service_views.create_service_request,
         name="create_service_request",
     ),
+
 
     # ============================================================
     # STAFF SERVICE REQUESTS
@@ -71,3 +100,4 @@ urlpatterns = [
         name="complete_service_request",
     ),
 ]
+

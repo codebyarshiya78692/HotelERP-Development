@@ -94,6 +94,9 @@
                 <p class="eyebrow">CHECKOUT</p>
 
                 <h2>Complete your order</h2>
+                <p class="checkout-note">
+                    Your order will be linked to your customer account.
+                </p>
 
                 <div class="checkout-total">
                     <span>Total</span>
@@ -190,3 +193,16 @@
 </section>
 
 {% endblock %}
+<style>
+    .cart-heading-actions {
+        display: flex;
+        gap: .65rem;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+    }
+    .checkout-note {
+        margin: .35rem 0 1.25rem;
+        color: var(--color-text-muted);
+    }
+</style>

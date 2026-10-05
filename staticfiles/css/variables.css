@@ -1,0 +1,37 @@
+:root {
+    /* Backgrounds */
+    --color-background: #f8f5f0;
+    --color-surface: #ffffff;
+    --color-dark: #171310;
+
+    /* Temporary brand palette */
+    --color-primary: #6b4f3a;
+    --color-secondary: #a67c52;
+    --color-accent: #c9a66b;
+
+    /* Text */
+    --color-text: #211c18;
+    --color-text-muted: #756d66;
+    --color-text-light: #ffffff;
+
+    /* Borders */
+    --color-border: rgba(33, 28, 24, 0.12);
+
+    /* Spacing */
+    --space-xs: 0.5rem;
+    --space-sm: 1rem;
+    --space-md: 2rem;
+    --space-lg: 4rem;
+    --space-xl: 8rem;
+
+    /* Radius */
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 24px;
+
+    /* Animation */
+    --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+    --duration-fast: 300ms;
+    --duration-normal: 700ms;
+    --duration-slow: 1200ms;
+}

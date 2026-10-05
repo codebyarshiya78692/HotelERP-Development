@@ -22,7 +22,9 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from .env
+# Load environment variables from .env for local development.
+# Production hosting platforms should provide these variables
+# through their environment-variable settings.
 load_dotenv(BASE_DIR / '.env')
 
 
@@ -30,17 +32,58 @@ load_dotenv(BASE_DIR / '.env')
 # SECURITY
 # ============================================================
 
-# Secret key is stored in .env
+# Secret key is stored in the environment.
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-# Debug mode is controlled through .env
+if not SECRET_KEY:
+    raise RuntimeError(
+        'SECRET_KEY environment variable is not configured.'
+    )
+
+
+# Debug mode is controlled through the environment.
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-# Local development hosts.
-# For production, set the real deployment hostname here.
+
+# ============================================================
+# ALLOWED HOSTS
+# ============================================================
+
+# Local development works with localhost and 127.0.0.1.
+#
+# For deployment, set:
+#
+# ALLOWED_HOSTS=your-domain.com,www.your-domain.com
+#
+# Multiple hosts should be comma-separated.
 ALLOWED_HOSTS = [
-    '127.0.0.1',
-    'localhost',
+    host.strip()
+    for host in os.getenv(
+        'ALLOWED_HOSTS',
+        '127.0.0.1,localhost',
+    ).split(',')
+    if host.strip()
+]
+
+
+# ============================================================
+# CSRF TRUSTED ORIGINS
+# ============================================================
+
+# For local development this can remain empty.
+#
+# For deployment, set for example:
+#
+# CSRF_TRUSTED_ORIGINS=https://your-domain.com
+#
+# Multiple origins should be comma-separated.
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        'CSRF_TRUSTED_ORIGINS',
+        '',
+    ).split(',')
+    if origin.strip()
 ]
 
 
@@ -75,6 +118,10 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+
+    # WhiteNoise serves static files in deployment.
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -197,9 +244,32 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+# Existing project static directory.
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+
+# Production collection directory.
+#
+# This fixes:
+# "You're using the staticfiles app without having set
+# STATIC_ROOT to a filesystem path."
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
+# WhiteNoise production static-file storage.
+STORAGES = {
+    'default': {
+        'BACKEND': (
+            'django.core.files.storage.FileSystemStorage'
+        ),
+    },
+    'staticfiles': {
+        'BACKEND': (
+            'whitenoise.storage.CompressedManifestStaticFilesStorage'
+        ),
+    },
+}
 
 
 # ============================================================
@@ -217,8 +287,32 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Development email backend.
 # Emails are printed in the terminal instead of being sent.
-EMAIL_BACKEND = (
-    'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = os.getenv(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend',
+)
+EMAIL_HOST = os.getenv(
+    'EMAIL_HOST',
+    'smtp-relay.brevo.com',
+)
+EMAIL_PORT = int(
+    os.getenv('EMAIL_PORT', '587')
+)
+
+EMAIL_USE_TLS = (
+    os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+)
+
+EMAIL_HOST_USER = os.getenv(
+    'EMAIL_HOST_USER',
+)
+
+EMAIL_HOST_PASSWORD = os.getenv(
+    'EMAIL_HOST_PASSWORD',
+)
+
+DEFAULT_FROM_EMAIL = os.getenv(
+    'DEFAULT_FROM_EMAIL',
 )
 
 
@@ -235,6 +329,48 @@ LOGIN_REDIRECT_URL = '/accounts/dashboard/'
 
 # After logout, return to the public homepage.
 LOGOUT_REDIRECT_URL = '/'
+
+
+# ============================================================
+# PRODUCTION SECURITY
+# ============================================================
+
+# These are disabled locally by default and can be enabled
+# through environment variables on the deployment platform.
+
+SECURE_SSL_REDIRECT = (
+    os.getenv('SECURE_SSL_REDIRECT', 'False').lower() == 'true'
+)
+
+SESSION_COOKIE_SECURE = (
+    os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
+)
+
+CSRF_COOKIE_SECURE = (
+    os.getenv('CSRF_COOKIE_SECURE', 'False').lower() == 'true'
+)
+
+SECURE_HSTS_SECONDS = int(
+    os.getenv('SECURE_HSTS_SECONDS', '0')
+)
+
+SECURE_HSTS_INCLUDE_SUBDOMAINS = (
+    os.getenv(
+        'SECURE_HSTS_INCLUDE_SUBDOMAINS',
+        'False',
+    ).lower() == 'true'
+)
+
+SECURE_HSTS_PRELOAD = (
+    os.getenv(
+        'SECURE_HSTS_PRELOAD',
+        'False',
+    ).lower() == 'true'
+)
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+SECURE_REFERRER_POLICY = 'same-origin'
 
 
 # ============================================================

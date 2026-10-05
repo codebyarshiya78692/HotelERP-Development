@@ -1,5 +1,7 @@
+from django.contrib.auth import views as auth_views
 from django.urls import path
 
+from . import auth_views as account_auth_views
 from . import views
 
 
@@ -9,7 +11,7 @@ app_name = "accounts"
 urlpatterns = [
 
     # ========================================================
-    # UNIFIED LOGIN
+    # LOGIN / LOGOUT
     # ========================================================
 
     path(
@@ -24,8 +26,20 @@ urlpatterns = [
         name="logout",
     ),
 
+
     # ========================================================
-    # CUSTOMER
+    # CUSTOMER SIGNUP
+    # ========================================================
+
+    path(
+        "signup/",
+        account_auth_views.signup,
+        name="signup",
+    ),
+
+
+    # ========================================================
+    # CUSTOMER DASHBOARD
     # ========================================================
 
     path(
@@ -34,27 +48,182 @@ urlpatterns = [
         name="dashboard",
     ),
 
+
     # ========================================================
-    # LEGACY ROLE LOGIN URLS
-    #
-    # These now use the SAME login page so there is only
-    # one real login experience.
+    # CUSTOMER ORDERS
     # ========================================================
 
     path(
-        "chef/login/",
+        "orders/",
+        views.my_orders,
+        name="my_orders",
+    ),
+
+    path(
+        "orders/<int:order_id>/",
+        views.order_detail,
+        name="order_detail",
+    ),
+
+    path(
+        "orders/<int:order_id>/track/",
+        views.track_order,
+        name="track_order",
+    ),
+
+    path(
+        "orders/<int:order_id>/cancel/",
+        views.cancel_order,
+        name="cancel_order",
+    ),
+
+    path(
+        "orders/<int:order_id>/summary/",
+        views.order_summary,
+        name="order_summary",
+    ),
+
+    path(
+        "orders/<int:order_id>/feedback/",
+        views.feedback_redirect,
+        name="feedback_redirect",
+    ),
+
+
+    # ========================================================
+    # CUSTOMER DINING SESSION
+    # ========================================================
+
+    path(
+        "session/start/<int:table_id>/",
+        views.start_session,
+        name="start_session",
+    ),
+
+    path(
+        "session/<int:session_id>/close/",
+        views.close_session,
+        name="close_session",
+    ),
+
+    path(
+        "active-session/",
+        views.active_session,
+        name="active_session",
+    ),
+
+
+    # ========================================================
+    # CUSTOMER SERVICE REQUESTS
+    # ========================================================
+
+    path(
+        "service-requests/",
+        views.my_service_requests,
+        name="my_service_requests",
+    ),
+
+    path(
+        "service-requests/create/",
+        views.create_service_request,
+        name="create_service_request",
+    ),
+
+
+    # ========================================================
+    # CUSTOMER TABLES / PROFILE
+    # ========================================================
+
+    path(
+        "tables/",
+        views.available_tables,
+        name="available_tables",
+    ),
+
+    path(
+        "profile/",
+        views.profile,
+        name="profile",
+    ),
+
+
+    # ========================================================
+    # PASSWORD RESET
+    # ========================================================
+
+    path(
+        "password-reset/",
+        auth_views.PasswordResetView.as_view(
+            template_name="registration/password_reset_form.html",
+            email_template_name="registration/password_reset_email.html",
+            subject_template_name="registration/password_reset_subject.txt",
+            success_url="/accounts/password-reset/done/",
+        ),
+        name="password_reset",
+    ),
+
+    path(
+        "password-reset/done/",
+        auth_views.PasswordResetDoneView.as_view(
+            template_name="registration/password_reset_done.html",
+        ),
+        name="password_reset_done",
+    ),
+
+    path(
+        "reset/<uidb64>/<token>/",
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name="registration/password_reset_confirm.html",
+            success_url="/accounts/reset/done/",
+        ),
+        name="password_reset_confirm",
+    ),
+
+    path(
+        "reset/done/",
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name="registration/password_reset_complete.html",
+        ),
+        name="password_reset_complete",
+    ),
+
+
+    # ========================================================
+    # CHANGE PASSWORD
+    # ========================================================
+
+    path(
+        "change-password/",
+        account_auth_views.CustomerPasswordChangeView.as_view(),
+        name="change_password",
+    ),
+
+
+    # ========================================================
+    # LEGACY ROLE LOGIN URLS
+    # ========================================================
+
+    path(
+        "staff/login/",
         views.customer_login,
+        name="staff_login",
+    ),
+
+    path(
+        "chef/login/",
+        views.chef_login,
         name="chef_login",
     ),
 
     path(
         "waiter/login/",
-        views.customer_login,
+        views.waiter_login,
         name="waiter_login",
     ),
 
+
     # ========================================================
-    # WAITER
+    # WAITER DASHBOARD
     # ========================================================
 
     path(
@@ -87,8 +256,9 @@ urlpatterns = [
         name="waiter_take_order",
     ),
 
+
     # ========================================================
-    # STAFF
+    # STAFF DASHBOARD
     # ========================================================
 
     path(
@@ -96,4 +266,28 @@ urlpatterns = [
         views.staff_dashboard,
         name="staff_dashboard",
     ),
-]
+
+    path(
+        "staff/orders/",
+        views.staff_orders,
+        name="staff_orders",
+    ),
+
+    path(
+        "staff/requests/",
+        views.staff_requests,
+        name="staff_requests",
+    ),
+
+    path(
+        "role-dashboard/",
+        views.role_dashboard,
+        name="role_dashboard",
+    ),
+
+    path(
+        "system-status/",
+        views.system_status,
+        name="system_status",
+    ),
+]       

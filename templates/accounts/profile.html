@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile | IDDS{% endblock %}
+
+{% block content %}
+<section class="section section-tight account-page">
+    <div class="container">
+        <div class="page-heading reveal">
+            <p class="eyebrow">CUSTOMER ACCOUNT</p>
+            <h1>My Profile</h1>
+            <p>Your account details and customer controls.</p>
+        </div>
+
+        <div class="account-layout">
+            <div class="dashboard-panel reveal">
+                <p class="eyebrow">ACCOUNT DETAILS</p>
+                <h2>{{ user.get_full_name|default:user.username }}</h2>
+
+                <div class="profile-details">
+                    <div><span>Username</span><strong>{{ user.username }}</strong></div>
+                    <div><span>Email</span><strong>{{ user.email|default:"Not added" }}</strong></div>
+                    <div><span>Member since</span><strong>{{ user.date_joined|date:"d M Y" }}</strong></div>
+                </div>
+            </div>
+
+            <div class="dashboard-panel reveal">
+                <p class="eyebrow">CUSTOMER CONTROLS</p>
+                <div class="account-links">
+                    <a class="account-link" href="{% url 'restaurant:menu' %}"><span>Browse Menu</span><span>→</span></a>
+                    <a class="account-link" href="{% url 'cart' %}"><span>My Cart</span><span>→</span></a>
+                    <a class="account-link" href="{% url 'accounts:my_orders' %}"><span>My Orders</span><span>→</span></a>
+                    <a class="account-link" href="{% url 'accounts:change_password' %}"><span>Change Password</span><span>→</span></a>
+                    <a class="account-link" href="{% url 'accounts:logout' %}"><span>Logout</span><span>→</span></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.account-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.5rem}
+.profile-details{display:grid;gap:1rem;margin-top:1.5rem}
+.profile-details div{padding:1rem 1.1rem;border:1px solid var(--color-border);border-radius:14px;background:var(--color-background)}
+.profile-details span{display:block;color:var(--color-text-muted);font-size:.82rem;margin-bottom:.3rem}
+.account-links{display:grid;gap:.75rem;margin-top:1rem}
+.account-link{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.1rem;border:1px solid var(--color-border);border-radius:14px;text-decoration:none;color:inherit;background:var(--color-background);transition:transform .2s ease,box-shadow .2s ease}
+.account-link:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(40,30,20,.08)}
+@media(max-width:800px){.account-layout{grid-template-columns:1fr}}
+</style>
+{% endblock %}

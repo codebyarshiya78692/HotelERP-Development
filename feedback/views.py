@@ -8,24 +8,25 @@ from orders.models import DiningSession
 from .models import Feedback
 
 
-@login_required
 def create_feedback(request, session_id):
     """
     Allow a customer to submit feedback for a completed
     dining session.
-    """
 
-    if request.user.is_staff:
-        messages.warning(
-            request,
-            "Staff members cannot submit customer feedback.",
-        )
-        return redirect("admin:index")
+    Login is not required.
+    """
 
     session = get_object_or_404(
         DiningSession.objects.select_related("table"),
         id=session_id,
     )
+
+    if request.user.is_authenticated and request.user.is_staff:
+        messages.warning(
+            request,
+            "Staff members cannot submit customer feedback.",
+        )
+        return redirect("admin:index")
 
     if session.status != "completed":
         messages.warning(
@@ -33,16 +34,24 @@ def create_feedback(request, session_id):
             "Feedback can only be submitted after your dining "
             "session has been completed.",
         )
-        return redirect("orders:my_orders")
+
+        if request.user.is_authenticated:
+            return redirect("orders:my_orders")
+
+        return redirect("/")
 
     if Feedback.objects.filter(
-        session=session
+        session=session,
     ).exists():
         messages.info(
             request,
             "Feedback has already been submitted for this session.",
         )
-        return redirect("orders:my_orders")
+
+        if request.user.is_authenticated:
+            return redirect("orders:my_orders")
+
+        return redirect("/")
 
     if request.method == "POST":
         rating = request.POST.get("rating")
@@ -59,6 +68,7 @@ def create_feedback(request, session_id):
                 request,
                 "Please select a rating between 1 and 5.",
             )
+
             return render(
                 request,
                 "feedback/form.html",
@@ -75,6 +85,7 @@ def create_feedback(request, session_id):
                 request,
                 "Please tell us whether you would recommend us.",
             )
+
             return render(
                 request,
                 "feedback/form.html",
@@ -88,7 +99,6 @@ def create_feedback(request, session_id):
 
         Feedback.objects.create(
             session=session,
-            customer_name=request.user.username,
             rating=rating_value,
             comment=comment,
             would_recommend=would_recommend == "yes",
@@ -99,7 +109,10 @@ def create_feedback(request, session_id):
             "Thank you! Your feedback has been submitted.",
         )
 
-        return redirect("orders:my_orders")
+        if request.user.is_authenticated:
+            return redirect("orders:my_orders")
+
+        return redirect("/")
 
     return render(
         request,
@@ -130,59 +143,7 @@ def dashboard(request):
 
     total_feedback = feedback_queryset.count()
 
-    recommended_count = feedback_queryset.filter(
-        would_recommend=True
-    ).count()
-
-    average_rating = feedback_queryset.aggregate(
-        average=Avg("rating")
-    )["average"]
-
-    rating_breakdown = (
-        feedback_queryset
-        .values("rating")
-        .annotate(count=Count("id"))
-        .order_by("-rating")
-    )
-
-    recent_feedback = feedback_queryset.order_by(
-        "-created_at"
-    )[:20]
-
-    context = {
-        "total_feedback": total_feedback,
-        "recommended_count": recommended_count,
-        "average_rating": average_rating,
-        "rating_breakdown": rating_breakdown,
-        "recent_feedback": recent_feedback,
-    }
-
-    return render(
-        request,
-        "feedback/dashboard.html",
-        context,
-    )
-@login_required
-def dashboard(request):
-    """
-    Staff feedback dashboard.
-    """
-
-    if not request.user.is_staff:
-        return render(
-            request,
-            "feedback/access_denied.html",
-            status=403,
-        )
-
-    feedback_queryset = Feedback.objects.select_related(
-        "session",
-        "session__table",
-    )
-
-    total_feedback = feedback_queryset.count()
-
-    recommended_count = feedback_queryset.filter(
+    total_recommendations = feedback_queryset.filter(
         would_recommend=True,
     ).count()
 
@@ -199,16 +160,16 @@ def dashboard(request):
         .order_by("-rating")
     )
 
-    recent_feedback = feedback_queryset.order_by(
+    feedback = feedback_queryset.order_by(
         "-created_at",
     )[:20]
 
     context = {
         "total_feedback": total_feedback,
-        "recommended_count": recommended_count,
+        "total_recommendations": total_recommendations,
         "average_rating": average_rating,
         "rating_breakdown": rating_breakdown,
-        "recent_feedback": recent_feedback,
+        "feedback": feedback,
     }
 
     return render(

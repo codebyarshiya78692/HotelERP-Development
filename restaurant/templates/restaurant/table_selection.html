@@ -99,22 +99,30 @@
                             </span>
 
 
-                            <a
-                                href="{% url 'start_dining' table.id %}"
-                                class="btn btn-primary"
-                            >
-                                Select Table
+                            {% if user.is_authenticated %}
 
-                                <span aria-hidden="true">
-                                    →
-                                </span>
+                                <form method="post" action="{% url 'accounts:start_session' table.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary">
+                                        Select Table <span aria-hidden="true">→</span>
+                                    </button>
+                                </form>
 
-                            </a>
+                            {% else %}
+
+                                <a
+                                    href="{% url 'accounts:login' %}?next={% url 'table_selection' %}"
+                                    class="btn btn-primary"
+                                >
+                                    Sign in to select
+                                </a>
+
+                            {% endif %}
 
                         {% else %}
 
                             <span class="status unavailable">
-                                {{ table.get_status_display }}
+                                Currently unavailable
                             </span>
 
 
