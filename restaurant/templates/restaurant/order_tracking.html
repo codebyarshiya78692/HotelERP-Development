@@ -26,7 +26,7 @@ IDDS | Track Order #{{ order.id }}
 
             <p>
                 Table {{ order.session.table.table_number }}
-                Â· Stay updated while our kitchen prepares your meal.
+                &middot; Stay updated while our kitchen prepares your meal.
             </p>
 
         </div>
@@ -79,11 +79,11 @@ IDDS | Track Order #{{ order.id }}
 
                             {% if forloop.counter0 < current_index %}
 
-                                âœ“
+                                &#10003;
 
                             {% elif order.status == status_code %}
 
-                                â—
+                                &#9679;
 
                             {% else %}
 
@@ -143,7 +143,7 @@ IDDS | Track Order #{{ order.id }}
                         </span>
 
                         <strong>
-                            â‚¹{{ item.total_price|floatformat:2 }}
+                            &#8377;{{ item.total_price|floatformat:2 }}
                         </strong>
 
                     </div>
@@ -162,7 +162,7 @@ IDDS | Track Order #{{ order.id }}
                 </span>
 
                 <strong>
-                    â‚¹{{ order.total_amount|floatformat:2 }}
+                    &#8377;{{ order.total_amount|floatformat:2 }}
                 </strong>
 
             </div>
@@ -177,7 +177,7 @@ IDDS | Track Order #{{ order.id }}
                     class="btn btn-primary"
                 >
                     Order More
-                    <span>â†’</span>
+                    <span>&rarr;</span>
                 </a>
 
 
@@ -207,7 +207,7 @@ IDDS | Track Order #{{ order.id }}
                 </p>
 
                 <h3>
-                    Need help at your table?.
+                    Need help at your table?
                 </h3>
 
                 <p class="muted">
@@ -269,5 +269,7 @@ IDDS | Track Order #{{ order.id }}
 </script>
 
 {% endblock %}
+
+
 
 

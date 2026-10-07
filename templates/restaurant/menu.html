@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}IDDS | Digital Menu{% endblock %}
 
@@ -709,7 +710,7 @@
                                     <div class="menu-card-image">
 
                                         <img
-                                            src="/media/{{ item.image.name }}"
+                                            src="{% static item.image.name %}"
                                             alt="{{ item.name }}"
                                             loading="eager"
                                             decoding="async"

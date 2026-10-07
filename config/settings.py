@@ -60,7 +60,7 @@ ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv(
         'ALLOWED_HOSTS',
-        '127.0.0.1,localhost',
+        'localhost,127.0.0.1,hotel-erp-delta.vercel.app',
     ).split(',')
     if host.strip()
 ]
@@ -118,6 +118,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -243,6 +244,7 @@ STATIC_URL = '/static/'
 # Existing project static directory.
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
+    BASE_DIR / 'media',
 ]
 
 # Production collection directory.
@@ -250,6 +252,11 @@ STATICFILES_DIRS = [
 # This fixes:
 # "You're using the staticfiles app without having set
 # STATIC_ROOT to a filesystem path."
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
+# WhiteNoise production static-file storage.
+# Production collection directory.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
@@ -266,7 +273,6 @@ STORAGES = {
         ),
     },
 }
-
 
 # ============================================================
 # MEDIA FILES
