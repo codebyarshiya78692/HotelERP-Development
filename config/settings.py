@@ -60,7 +60,7 @@ ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv(
         'ALLOWED_HOSTS',
-        'localhost,127.0.0.1,hotel-erp-delta.vercel.app',
+        'localhost,127.0.0.1,hotel-erp-delta.vercel.app,hotel-erp-development.vercel.app',
     ).split(',')
     if host.strip()
 ]
