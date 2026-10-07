@@ -7,6 +7,10 @@ Reports | IDDS
 {% block content %}
 
 <style>
+    /* =========================================================
+       REPORTS PAGE
+       ========================================================= */
+
     .reports-page {
         padding: 40px 0 70px;
     }
@@ -222,7 +226,413 @@ Reports | IDDS
         opacity: 0.65;
     }
 
+
+    /* =========================================================
+       STAFF PERFORMANCE REPORT
+       ========================================================= */
+
+    .staff-performance {
+        width: 100%;
+        max-width: 1200px;
+        margin: 55px auto 20px;
+        padding: 34px;
+
+        box-sizing: border-box;
+
+        background: #ffffff;
+        border: 1px solid #e8e2db;
+        border-radius: 20px;
+
+        box-shadow:
+            0 8px 30px rgba(48, 39, 31, 0.06);
+    }
+
+    .staff-performance-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 25px;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+    }
+
+    .staff-performance-heading {
+        min-width: 0;
+    }
+
+    .staff-performance-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 11px;
+        margin-bottom: 11px;
+
+        border-radius: 999px;
+        background: #f4eee7;
+        color: #6f5138;
+
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .staff-performance-title {
+        margin: 0;
+        color: #2b2520;
+        font-size: 27px;
+        line-height: 1.2;
+        font-weight: 750;
+        letter-spacing: -0.4px;
+    }
+
+    .staff-performance-description {
+        max-width: 700px;
+        margin: 9px 0 0;
+        color: #7b736b;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .staff-performance-period {
+        min-width: 145px;
+        padding: 12px 15px;
+
+        background: #ffffff;
+        border: 1px solid #e7e0d8;
+        border-radius: 12px;
+    }
+
+    .staff-performance-period-label {
+        display: block;
+        margin-bottom: 4px;
+
+        color: #9a9087;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+
+    .staff-performance-period-value {
+        color: #40372f;
+        font-size: 12px;
+        font-weight: 750;
+    }
+
+
+    /* =========================================================
+       STAFF SUMMARY CARDS
+       ========================================================= */
+
+    .staff-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 15px;
+        margin-bottom: 36px;
+    }
+
+    .staff-summary-card {
+        min-width: 0;
+        padding: 20px;
+
+        background: #ffffff;
+        border: 1px solid #ebe5df;
+        border-radius: 15px;
+
+        box-shadow:
+            0 3px 12px rgba(48, 39, 31, 0.035);
+
+        transition:
+            transform 0.18s ease,
+            box-shadow 0.18s ease,
+            border-color 0.18s ease;
+    }
+
+    .staff-summary-card:hover {
+        transform: translateY(-2px);
+        border-color: #ded4ca;
+
+        box-shadow:
+            0 7px 18px rgba(48, 39, 31, 0.07);
+    }
+
+    .staff-summary-label {
+        display: block;
+
+        color: #9a9087;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .staff-summary-value {
+        display: block;
+        margin-top: 8px;
+
+        color: #29231e;
+        font-size: 27px;
+        line-height: 1.1;
+        font-weight: 750;
+    }
+
+    .staff-summary-note {
+        display: block;
+        margin-top: 5px;
+
+        color: #8b8178;
+        font-size: 10px;
+        line-height: 1.5;
+    }
+
+
+    /* =========================================================
+       STAFF REPORT SECTIONS
+       ========================================================= */
+
+    .staff-report-section {
+        margin-bottom: 36px;
+    }
+
+    .staff-report-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .staff-section-heading {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .staff-section-icon {
+        width: 34px;
+        height: 34px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex: 0 0 34px;
+
+        border-radius: 10px;
+        background: #f4eee7;
+
+        font-size: 17px;
+    }
+
+    .staff-section-heading-text h3 {
+        margin: 0;
+
+        color: #342c26;
+        font-size: 18px;
+        line-height: 1.3;
+        font-weight: 700;
+    }
+
+    .staff-section-heading-text p {
+        margin: 3px 0 0;
+
+        color: #8a8179;
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+
+    /* =========================================================
+       STAFF TABLES
+       ========================================================= */
+
+    .staff-table-container {
+        width: 100%;
+        overflow-x: auto;
+
+        background: #ffffff;
+        border: 1px solid #e9e3dc;
+        border-radius: 15px;
+    }
+
+    .staff-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .staff-table th,
+    .staff-table td {
+        vertical-align: middle;
+    }
+
+    .staff-table thead th {
+        padding: 14px 18px;
+
+        background: #faf8f5;
+        border-bottom: 1px solid #e9e3dc;
+
+        color: #766b62;
+
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        line-height: 1.4;
+        text-transform: uppercase;
+
+        white-space: nowrap;
+    }
+
+    .staff-table tbody td {
+        padding: 16px 18px;
+
+        background: #ffffff;
+        border-bottom: 1px solid #f1ede8;
+
+        color: #4b433c;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .staff-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .staff-table tbody tr {
+        transition: background 0.15s ease;
+    }
+
+    .staff-table tbody tr:hover td {
+        background: #fcfaf8;
+    }
+
+    .staff-table th:first-child,
+    .staff-table td:first-child {
+        text-align: left;
+    }
+
+    .staff-table th:not(:first-child),
+    .staff-table td:not(:first-child) {
+        text-align: center;
+    }
+
+    .staff-name {
+        color: #332b25 !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+    }
+
+    .staff-number {
+        color: #332b25 !important;
+        font-weight: 700 !important;
+    }
+
+    .staff-time {
+        color: #665b52 !important;
+        font-weight: 600 !important;
+    }
+
+    .staff-total-time {
+        color: #40372f !important;
+        font-weight: 750 !important;
+    }
+
+
+    /* =========================================================
+       EMPTY STATES
+       ========================================================= */
+
+    .staff-empty {
+        padding: 30px 24px;
+
+        background: #faf8f5;
+        border: 1px dashed #ddd4ca;
+        border-radius: 15px;
+
+        text-align: center;
+    }
+
+    .staff-empty-icon {
+        margin-bottom: 8px;
+        font-size: 25px;
+    }
+
+    .staff-empty-title {
+        display: block;
+
+        color: #51473f;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .staff-empty-text {
+        display: block;
+        max-width: 500px;
+        margin: 6px auto 0;
+
+        color: #968b82;
+        font-size: 11px;
+        line-height: 1.6;
+    }
+
+
+    /* =========================================================
+       TIMING INFORMATION
+       ========================================================= */
+
+    .staff-timing-note {
+        margin-top: 28px;
+        padding: 20px;
+
+        background: #faf8f5;
+        border: 1px solid #ebe4dc;
+        border-radius: 15px;
+    }
+
+    .staff-timing-note-title {
+        margin-bottom: 13px;
+
+        color: #51473f;
+        font-size: 12px;
+        font-weight: 750;
+    }
+
+    .staff-timing-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .staff-timing-item-title {
+        margin-bottom: 4px;
+
+        color: #6f5138;
+        font-size: 11px;
+        font-weight: 750;
+    }
+
+    .staff-timing-item-text {
+        color: #81776f;
+        font-size: 11px;
+        line-height: 1.6;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE REPORTS
+       ========================================================= */
+
+    @media (max-width: 1100px) {
+
+        .staff-summary-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .staff-timing-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+
     @media (max-width: 1000px) {
+
         .report-kpis {
             grid-template-columns: repeat(2, 1fr);
         }
@@ -234,9 +644,40 @@ Reports | IDDS
         .report-panel-wide {
             grid-column: auto;
         }
+
+        .staff-performance {
+            width: calc(100% - 24px);
+        }
     }
 
+
+    @media (max-width: 700px) {
+
+        .staff-performance {
+            padding: 24px;
+        }
+
+        .staff-performance-title {
+            font-size: 23px;
+        }
+
+        .staff-summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .staff-timing-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .staff-performance-period {
+            width: 100%;
+            box-sizing: border-box;
+        }
+    }
+
+
     @media (max-width: 650px) {
+
         .report-kpis {
             grid-template-columns: 1fr;
         }
@@ -249,15 +690,30 @@ Reports | IDDS
         .reports-page {
             padding-top: 25px;
         }
+
+        .staff-performance {
+            width: calc(100% - 16px);
+            margin-top: 35px;
+            padding: 20px;
+            border-radius: 16px;
+        }
+
+        .staff-table {
+            min-width: 650px;
+        }
     }
 </style>
+
 
 <section class="reports-page">
     <div class="container">
 
         <div class="reports-hero reveal">
+
             <div>
-                <p class="eyebrow">IDDS BUSINESS INTELLIGENCE</p>
+                <p class="eyebrow">
+                    IDDS BUSINESS INTELLIGENCE
+                </p>
 
                 <h1>📊 Reports</h1>
 
@@ -266,6 +722,7 @@ Reports | IDDS
                     popular menu items, table usage and dining activity.
                 </p>
             </div>
+
 
             <div class="report-periods">
 
@@ -298,16 +755,26 @@ Reports | IDDS
                 </a>
 
             </div>
+
         </div>
 
 
         {% if period == "custom" %}
+
         <form method="get" class="custom-report-form">
 
-            <input type="hidden" name="period" value="custom">
+            <input
+                type="hidden"
+                name="period"
+                value="custom"
+            >
 
             <div>
-                <label for="start_date">From Date</label>
+
+                <label for="start_date">
+                    From Date
+                </label>
+
                 <input
                     type="date"
                     id="start_date"
@@ -315,10 +782,16 @@ Reports | IDDS
                     value="{{ start_date|date:'Y-m-d' }}"
                     required
                 >
+
             </div>
 
+
             <div>
-                <label for="end_date">To Date</label>
+
+                <label for="end_date">
+                    To Date
+                </label>
+
                 <input
                     type="date"
                     id="end_date"
@@ -326,25 +799,38 @@ Reports | IDDS
                     value="{{ end_date|date:'Y-m-d' }}"
                     required
                 >
+
             </div>
 
-            <button type="submit" class="btn btn-primary">
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
                 Apply Report
             </button>
 
         </form>
+
         {% endif %}
 
 
         {% if access_denied %}
 
         <div class="report-panel">
+
             <div class="report-empty">
-                <h2>Staff access required</h2>
+
+                <h2>
+                    Staff access required
+                </h2>
+
                 <p>
                     Reports are available to authorized restaurant staff.
                 </p>
+
             </div>
+
         </div>
 
         {% else %}
@@ -357,6 +843,7 @@ Reports | IDDS
         <div class="report-kpis">
 
             <article class="report-kpi">
+
                 <span class="report-kpi-label">
                     Revenue
                 </span>
@@ -368,10 +855,12 @@ Reports | IDDS
                 <small>
                     {{ period_label }}
                 </small>
+
             </article>
 
 
             <article class="report-kpi">
+
                 <span class="report-kpi-label">
                     Orders
                 </span>
@@ -383,10 +872,12 @@ Reports | IDDS
                 <small>
                     Orders placed
                 </small>
+
             </article>
 
 
             <article class="report-kpi">
+
                 <span class="report-kpi-label">
                     Completed Sessions
                 </span>
@@ -398,10 +889,12 @@ Reports | IDDS
                 <small>
                     {{ period_label }}
                 </small>
+
             </article>
 
 
             <article class="report-kpi">
+
                 <span class="report-kpi-label">
                     Average Order Value
                 </span>
@@ -413,6 +906,7 @@ Reports | IDDS
                 <small>
                     Average ticket value
                 </small>
+
             </article>
 
         </div>
@@ -428,12 +922,25 @@ Reports | IDDS
             <!-- REVENUE -->
 
             <section class="report-panel">
+
                 <div class="report-panel-header">
-                    <p class="eyebrow">SALES</p>
-                    <h2>Revenue</h2>
+
+                    <p class="eyebrow">
+                        SALES
+                    </p>
+
+                    <h2>
+                        Revenue
+                    </h2>
+
                 </div>
 
-                <div class="report-kpi" style="margin: 0 24px 24px;">
+
+                <div
+                    class="report-kpi"
+                    style="margin: 0 24px 24px;"
+                >
+
                     <span class="report-kpi-label">
                         {{ period_label }}
                     </span>
@@ -445,19 +952,34 @@ Reports | IDDS
                     <small>
                         Based on non-cancelled orders
                     </small>
+
                 </div>
+
             </section>
 
 
             <!-- ORDERS -->
 
             <section class="report-panel">
+
                 <div class="report-panel-header">
-                    <p class="eyebrow">ORDER ACTIVITY</p>
-                    <h2>Orders</h2>
+
+                    <p class="eyebrow">
+                        ORDER ACTIVITY
+                    </p>
+
+                    <h2>
+                        Orders
+                    </h2>
+
                 </div>
 
-                <div class="report-kpi" style="margin: 0 24px 24px;">
+
+                <div
+                    class="report-kpi"
+                    style="margin: 0 24px 24px;"
+                >
+
                     <span class="report-kpi-label">
                         Total Orders
                     </span>
@@ -470,7 +992,9 @@ Reports | IDDS
                         {{ completed_orders }} completed ·
                         {{ active_orders }} active
                     </small>
+
                 </div>
+
             </section>
 
 
@@ -479,27 +1003,49 @@ Reports | IDDS
             <section class="report-panel report-panel-wide">
 
                 <div class="report-panel-header">
-                    <p class="eyebrow">MENU PERFORMANCE</p>
-                    <h2>Popular Menu Items</h2>
+
+                    <p class="eyebrow">
+                        MENU PERFORMANCE
+                    </p>
+
+                    <h2>
+                        Popular Menu Items
+                    </h2>
+
                 </div>
+
 
                 <div class="report-table-wrapper">
 
                     <table class="report-table">
 
                         <thead>
+
                             <tr>
-                                <th>Menu Item</th>
-                                <th>Quantity Sold</th>
-                                <th>Revenue</th>
+
+                                <th>
+                                    Menu Item
+                                </th>
+
+                                <th>
+                                    Quantity Sold
+                                </th>
+
+                                <th>
+                                    Revenue
+                                </th>
+
                             </tr>
+
                         </thead>
+
 
                         <tbody>
 
                             {% for item in top_items %}
 
                             <tr>
+
                                 <td>
                                     <strong>
                                         {{ item.item_name }}
@@ -513,14 +1059,17 @@ Reports | IDDS
                                 <td>
                                     ₹{{ item.revenue|floatformat:2 }}
                                 </td>
+
                             </tr>
 
                             {% empty %}
 
                             <tr>
+
                                 <td colspan="3">
                                     No sales data available for this period.
                                 </td>
+
                             </tr>
 
                             {% endfor %}
@@ -539,31 +1088,55 @@ Reports | IDDS
             <section class="report-panel">
 
                 <div class="report-panel-header">
-                    <p class="eyebrow">RESTAURANT OPERATIONS</p>
-                    <h2>Table Usage</h2>
+
+                    <p class="eyebrow">
+                        RESTAURANT OPERATIONS
+                    </p>
+
+                    <h2>
+                        Table Usage
+                    </h2>
+
                 </div>
+
 
                 <div class="report-table-wrapper">
 
                     <table class="report-table">
 
                         <thead>
+
                             <tr>
-                                <th>Table</th>
-                                <th>Sessions</th>
-                                <th>Orders</th>
+
+                                <th>
+                                    Table
+                                </th>
+
+                                <th>
+                                    Sessions
+                                </th>
+
+                                <th>
+                                    Orders
+                                </th>
+
                             </tr>
+
                         </thead>
+
 
                         <tbody>
 
                             {% for table in table_usage %}
 
                             <tr>
+
                                 <td>
+
                                     <strong>
                                         Table {{ table.table__table_number }}
                                     </strong>
+
                                 </td>
 
                                 <td>
@@ -573,14 +1146,17 @@ Reports | IDDS
                                 <td>
                                     {{ table.order_count }}
                                 </td>
+
                             </tr>
 
                             {% empty %}
 
                             <tr>
+
                                 <td colspan="3">
                                     No table activity available.
                                 </td>
+
                             </tr>
 
                             {% endfor %}
@@ -599,20 +1175,43 @@ Reports | IDDS
             <section class="report-panel">
 
                 <div class="report-panel-header">
-                    <p class="eyebrow">DINING ACTIVITY</p>
-                    <h2>Dining Sessions</h2>
+
+                    <p class="eyebrow">
+                        DINING ACTIVITY
+                    </p>
+
+                    <h2>
+                        Dining Sessions
+                    </h2>
+
                 </div>
+
 
                 <div class="session-summary">
 
                     <div class="session-box">
-                        <span>Completed</span>
-                        <strong>{{ completed_sessions }}</strong>
+
+                        <span>
+                            Completed
+                        </span>
+
+                        <strong>
+                            {{ completed_sessions }}
+                        </strong>
+
                     </div>
 
+
                     <div class="session-box">
-                        <span>Active Now</span>
-                        <strong>{{ active_sessions }}</strong>
+
+                        <span>
+                            Active Now
+                        </span>
+
+                        <strong>
+                            {{ active_sessions }}
+                        </strong>
+
                     </div>
 
                 </div>
@@ -625,15 +1224,24 @@ Reports | IDDS
             <section class="report-panel report-panel-wide">
 
                 <div class="report-panel-header">
-                    <p class="eyebrow">OPERATIONS</p>
-                    <h2>Order Status</h2>
+
+                    <p class="eyebrow">
+                        OPERATIONS
+                    </p>
+
+                    <h2>
+                        Order Status
+                    </h2>
+
                 </div>
+
 
                 <div class="status-grid">
 
                     {% for status in status_breakdown %}
 
                     <div class="status-card">
+
                         <span>
                             {{ status.status|title }}
                         </span>
@@ -641,6 +1249,7 @@ Reports | IDDS
                         <strong>
                             {{ status.count }}
                         </strong>
+
                     </div>
 
                     {% empty %}
@@ -661,14 +1270,28 @@ Reports | IDDS
             <section class="report-panel report-panel-wide">
 
                 <div class="report-panel-header">
-                    <p class="eyebrow">RESTAURANT SNAPSHOT</p>
-                    <h2>Current Operations</h2>
+
+                    <p class="eyebrow">
+                        RESTAURANT SNAPSHOT
+                    </p>
+
+                    <h2>
+                        Current Operations
+                    </h2>
+
                 </div>
 
-                <div class="report-kpis"
-                     style="padding: 0 24px 24px; margin-bottom: 0;">
+
+                <div
+                    class="report-kpis"
+                    style="
+                        padding: 0 24px 24px;
+                        margin-bottom: 0;
+                    "
+                >
 
                     <article class="report-kpi">
+
                         <span class="report-kpi-label">
                             Total Tables
                         </span>
@@ -680,10 +1303,12 @@ Reports | IDDS
                         <small>
                             {{ available_tables }} available
                         </small>
+
                     </article>
 
 
                     <article class="report-kpi">
+
                         <span class="report-kpi-label">
                             Tables In Use
                         </span>
@@ -695,10 +1320,12 @@ Reports | IDDS
                         <small>
                             Currently occupied
                         </small>
+
                     </article>
 
 
                     <article class="report-kpi">
+
                         <span class="report-kpi-label">
                             Menu Items
                         </span>
@@ -710,10 +1337,12 @@ Reports | IDDS
                         <small>
                             {{ available_menu_items }} available
                         </small>
+
                     </article>
 
 
                     <article class="report-kpi">
+
                         <span class="report-kpi-label">
                             Unavailable Items
                         </span>
@@ -725,6 +1354,7 @@ Reports | IDDS
                         <small>
                             Currently unavailable
                         </small>
+
                     </article>
 
                 </div>
@@ -736,6 +1366,571 @@ Reports | IDDS
         {% endif %}
 
     </div>
+</section>
+
+
+<!-- =========================================================
+     STAFF PERFORMANCE REPORT
+     ========================================================= -->
+
+<section class="staff-performance">
+
+    <!-- HEADER -->
+
+    <div class="staff-performance-header">
+
+        <div class="staff-performance-heading">
+
+            <span class="staff-performance-badge">
+                Staff Analytics
+            </span>
+
+            <h2 class="staff-performance-title">
+                Staff Performance
+            </h2>
+
+            <p class="staff-performance-description">
+                Monitor how efficiently chefs prepare orders and
+                how quickly waiters serve completed orders during
+                <strong>
+                    {{ period_label }}
+                </strong>.
+            </p>
+
+        </div>
+
+
+        <div class="staff-performance-period">
+
+            <span class="staff-performance-period-label">
+                Reporting Period
+            </span>
+
+            <span class="staff-performance-period-value">
+                {{ period_label }}
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- SUMMARY -->
+
+    <div class="staff-summary-grid">
+
+        <div class="staff-summary-card">
+
+            <span class="staff-summary-label">
+                Orders in Period
+            </span>
+
+            <span class="staff-summary-value">
+                {{ total_orders }}
+            </span>
+
+            <span class="staff-summary-note">
+                Excluding cancelled orders
+            </span>
+
+        </div>
+
+
+        <div class="staff-summary-card">
+
+            <span class="staff-summary-label">
+                Chefs Active
+            </span>
+
+            <span class="staff-summary-value">
+                {{ chef_performance|length }}
+            </span>
+
+            <span class="staff-summary-note">
+                Based on actual orders
+            </span>
+
+        </div>
+
+
+        <div class="staff-summary-card">
+
+            <span class="staff-summary-label">
+                Waiters Active
+            </span>
+
+            <span class="staff-summary-value">
+                {{ waiter_performance|length }}
+            </span>
+
+            <span class="staff-summary-note">
+                Based on actual orders
+            </span>
+
+        </div>
+
+
+        <div class="staff-summary-card">
+
+            <span class="staff-summary-label">
+                Timing Records
+            </span>
+
+            <span class="staff-summary-value">
+                {{ performance_orders|length }}
+            </span>
+
+            <span class="staff-summary-note">
+                Latest timing records shown
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         CHEF PERFORMANCE
+         ===================================================== -->
+
+    <div class="staff-report-section">
+
+        <div class="staff-section-heading">
+
+            <div class="staff-section-icon">
+                👨‍🍳
+            </div>
+
+            <div class="staff-section-heading-text">
+
+                <h3>
+                    Chef Performance
+                </h3>
+
+                <p>
+                    Preparation workload and kitchen timing
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% if chef_performance %}
+
+        <div class="staff-table-container">
+
+            <table class="staff-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Chef
+                        </th>
+
+                        <th>
+                            Orders Handled
+                        </th>
+
+                        <th>
+                            Avg. Order → Start
+                        </th>
+
+                        <th>
+                            Avg. Preparation
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for chef in chef_performance %}
+
+                    <tr>
+
+                        <td class="staff-name">
+                            {{ chef.name }}
+                        </td>
+
+                        <td class="staff-number">
+                            {{ chef.orders }}
+                        </td>
+
+                        <td class="staff-time">
+                            {{ chef.avg_order_to_start }}
+                        </td>
+
+                        <td class="staff-time">
+                            {{ chef.avg_prep_time }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="staff-empty">
+
+            <div class="staff-empty-icon">
+                👨‍🍳
+            </div>
+
+            <span class="staff-empty-title">
+                No chef activity yet
+            </span>
+
+            <span class="staff-empty-text">
+                Chef performance will appear here when orders
+                are processed through the website.
+            </span>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =====================================================
+         WAITER PERFORMANCE
+         ===================================================== -->
+
+    <div class="staff-report-section">
+
+        <div class="staff-section-heading">
+
+            <div class="staff-section-icon">
+                🧑‍🍳
+            </div>
+
+            <div class="staff-section-heading-text">
+
+                <h3>
+                    Waiter Performance
+                </h3>
+
+                <p>
+                    Service workload and customer delivery timing
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% if waiter_performance %}
+
+        <div class="staff-table-container">
+
+            <table class="staff-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Waiter
+                        </th>
+
+                        <th>
+                            Orders Served
+                        </th>
+
+                        <th>
+                            Avg. Ready → Served
+                        </th>
+
+                        <th>
+                            Avg. Order → Served
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for waiter in waiter_performance %}
+
+                    <tr>
+
+                        <td class="staff-name">
+                            {{ waiter.name }}
+                        </td>
+
+                        <td class="staff-number">
+                            {{ waiter.orders }}
+                        </td>
+
+                        <td class="staff-time">
+                            {{ waiter.avg_service_time }}
+                        </td>
+
+                        <td class="staff-total-time">
+                            {{ waiter.avg_total_time }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="staff-empty">
+
+            <div class="staff-empty-icon">
+                🧑‍🍳
+            </div>
+
+            <span class="staff-empty-title">
+                No waiter activity yet
+            </span>
+
+            <span class="staff-empty-text">
+                Waiter performance will appear here when orders
+                are served through the website.
+            </span>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =====================================================
+         ORDER TIMING DETAILS
+         ===================================================== -->
+
+    <div class="staff-report-section">
+
+        <div class="staff-section-heading">
+
+            <div class="staff-section-icon">
+                ⏱
+            </div>
+
+            <div class="staff-section-heading-text">
+
+                <h3>
+                    Order Timing
+                </h3>
+
+                <p>
+                    Timing calculated from real order activity
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% if performance_orders %}
+
+        <div class="staff-table-container">
+
+            <table
+                class="staff-table"
+                style="min-width: 1000px;"
+            >
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Order
+                        </th>
+
+                        <th>
+                            Chef
+                        </th>
+
+                        <th>
+                            Waiter
+                        </th>
+
+                        <th>
+                            Order → Start
+                        </th>
+
+                        <th>
+                            Preparation
+                        </th>
+
+                        <th>
+                            Ready → Served
+                        </th>
+
+                        <th>
+                            Total
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for order in performance_orders %}
+
+                    <tr>
+
+                        <td class="staff-number">
+                            #{{ order.id }}
+                        </td>
+
+                        <td>
+                            {{ order.chef }}
+                        </td>
+
+                        <td>
+                            {{ order.waiter }}
+                        </td>
+
+                        <td class="staff-time">
+                            {{ order.order_to_start }}
+                        </td>
+
+                        <td class="staff-time">
+                            {{ order.prep_time }}
+                        </td>
+
+                        <td class="staff-time">
+                            {{ order.ready_to_served }}
+                        </td>
+
+                        <td class="staff-total-time">
+                            {{ order.total_time }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="staff-empty">
+
+            <div class="staff-empty-icon">
+                ⏱
+            </div>
+
+            <span class="staff-empty-title">
+                No timing records available
+            </span>
+
+            <span class="staff-empty-text">
+                Timing information will automatically appear here
+                when customers place orders and the kitchen and
+                service teams process them through the website.
+            </span>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =====================================================
+         TIMING EXPLANATION
+         ===================================================== -->
+
+    <div class="staff-timing-note">
+
+        <div class="staff-timing-note-title">
+            How the timing is calculated
+        </div>
+
+
+        <div class="staff-timing-grid">
+
+            <div>
+
+                <div class="staff-timing-item-title">
+                    Order → Start
+                </div>
+
+                <div class="staff-timing-item-text">
+                    Customer places the order until the chef
+                    starts preparing it.
+                </div>
+
+            </div>
+
+
+            <div>
+
+                <div class="staff-timing-item-title">
+                    Preparation
+                </div>
+
+                <div class="staff-timing-item-text">
+                    Chef starts preparing the order until the
+                    food is marked ready.
+                </div>
+
+            </div>
+
+
+            <div>
+
+                <div class="staff-timing-item-title">
+                    Ready → Served
+                </div>
+
+                <div class="staff-timing-item-text">
+                    Food is marked ready until the waiter serves
+                    it to the customer.
+                </div>
+
+            </div>
+
+
+            <div>
+
+                <div class="staff-timing-item-title">
+                    Total
+                </div>
+
+                <div class="staff-timing-item-text">
+                    Complete time from placing the order until
+                    it is served.
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </section>
 
 {% endblock %}

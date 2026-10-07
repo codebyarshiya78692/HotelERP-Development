@@ -1,374 +1,581 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
 IDDS | Integrated Digital Dining System
 {% endblock %}
 
-
 {% block content %}
 
-<!-- =========================================================
-     HERO
-     ========================================================= -->
+<style>
+/* ============================================================
+   IDDS HOME — SINGLE-SCREEN RESTAURANT HERO
+   ============================================================ */
 
-<section class="hero-section">
+:root {
+    --idds-cream: #fbf7f0;
+    --idds-cream-2: #f3eadf;
+    --idds-brown: #4a2d1f;
+    --idds-brown-2: #75462f;
+    --idds-caramel: #b47b50;
+    --idds-line: rgba(117, 70, 47, 0.22);
+}
 
-    <div class="container">
+.idds-home-page {
+    position: relative;
+    min-height: calc(100vh - 76px);
+    height: calc(100vh - 76px);
+    overflow: hidden;
+    isolation: isolate;
+    background:
+        radial-gradient(circle at 12% 75%, rgba(180, 123, 80, 0.09), transparent 24%),
+        radial-gradient(circle at 80% 25%, rgba(180, 123, 80, 0.07), transparent 22%),
+        linear-gradient(135deg, var(--idds-cream), #fffdf9 52%, var(--idds-cream-2));
+    color: var(--idds-brown);
+}
 
-        <div class="hero-content reveal">
+.idds-home-page::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background-image:
+        radial-gradient(circle, rgba(117,70,47,.11) 1px, transparent 1px);
+    background-size: 34px 34px;
+    mask-image: linear-gradient(to bottom, transparent, black 22%, black 78%, transparent);
+    opacity: .18;
+}
 
-            <p class="eyebrow">
-                INTEGRATED DIGITAL DINING SYSTEM
-            </p>
+.idds-home-page::after {
+    content: "";
+    position: absolute;
+    width: 48vw;
+    height: 48vw;
+    max-width: 720px;
+    max-height: 720px;
+    right: -15vw;
+    top: -16vw;
+    border: 1px solid rgba(180, 123, 80, .22);
+    border-radius: 50%;
+    z-index: -1;
+    pointer-events: none;
+    animation: idds-orbit 18s ease-in-out infinite alternate;
+}
 
-            <h1>
-                A smarter way
-                <br>
-                to experience dining.
+.idds-home-inner {
+    width: min(1440px, 100%);
+    height: 100%;
+    margin: 0 auto;
+    padding: clamp(24px, 4vw, 58px) clamp(24px, 6vw, 92px);
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(360px, .98fr);
+    align-items: center;
+    gap: clamp(28px, 5vw, 82px);
+}
+
+.idds-copy {
+    position: relative;
+    z-index: 3;
+    max-width: 720px;
+}
+
+.idds-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin: 0 0 clamp(18px, 2.4vh, 30px);
+    color: var(--idds-brown-2);
+    font-size: clamp(10px, .72vw, 12px);
+    letter-spacing: .32em;
+    font-weight: 700;
+    animation: idds-fade-up .9s cubic-bezier(.22,1,.36,1) .12s both;
+}
+
+.idds-eyebrow::before {
+    content: "";
+    width: 72px;
+    height: 1px;
+    flex: 0 0 auto;
+    background: var(--idds-caramel);
+    transform-origin: left;
+    animation: idds-line-grow 1s cubic-bezier(.22,1,.36,1) .25s both;
+}
+
+.idds-title {
+    margin: 0;
+    max-width: 760px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(52px, 5.45vw, 92px);
+    line-height: .93;
+    font-weight: 500;
+    letter-spacing: -.055em;
+    color: #382116;
+    animation: idds-title-reveal 1.15s cubic-bezier(.16,1,.3,1) .24s both;
+}
+
+.idds-title .accent {
+    color: var(--idds-brown-2);
+    display: inline-block;
+    position: relative;
+    animation: idds-accent-in 1.15s cubic-bezier(.16,1,.3,1) .48s both;
+}
+
+.idds-title .accent::after {
+    content: "";
+    position: absolute;
+    left: 4%;
+    right: 1%;
+    bottom: -.08em;
+    height: 2px;
+    background: var(--idds-caramel);
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: idds-underline 1.1s cubic-bezier(.22,1,.36,1) 1.05s forwards;
+}
+
+.idds-description {
+    max-width: 610px;
+    margin: clamp(22px, 3vh, 34px) 0 0;
+    color: #765f51;
+    font-size: clamp(15px, 1.15vw, 19px);
+    line-height: 1.75;
+    animation: idds-fade-up .95s cubic-bezier(.22,1,.36,1) .62s both;
+}
+
+.idds-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: clamp(26px, 4vh, 42px);
+    animation: idds-fade-up .95s cubic-bezier(.22,1,.36,1) .8s both;
+}
+
+.idds-action {
+    position: relative;
+    min-width: 198px;
+    min-height: 58px;
+    padding: 0 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 16px;
+    font-weight: 600;
+    overflow: hidden;
+    transition: transform .35s ease, box-shadow .35s ease, background .35s ease;
+}
+
+.idds-action span {
+    display: inline-block;
+    transition: transform .35s ease;
+}
+
+.idds-primary {
+    color: #fffaf4;
+    background: linear-gradient(120deg, #5a3524, #7a4a31);
+    box-shadow: 0 12px 30px rgba(74, 45, 31, .17);
+}
+
+.idds-secondary {
+    color: var(--idds-brown-2);
+    border: 1px solid rgba(117, 70, 47, .52);
+    background: rgba(255, 252, 247, .62);
+    backdrop-filter: blur(8px);
+}
+
+.idds-action::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -80%;
+    width: 55%;
+    transform: skewX(-20deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+    transition: left .65s ease;
+}
+
+.idds-action:hover {
+    transform: translateY(-4px);
+}
+
+.idds-action:hover::before {
+    left: 125%;
+}
+
+.idds-action:hover span {
+    transform: translateX(5px);
+}
+
+.idds-primary:hover {
+    box-shadow: 0 17px 38px rgba(74, 45, 31, .25);
+}
+
+.idds-visual-wrap {
+    position: relative;
+    height: min(74vh, 700px);
+    min-height: 470px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: idds-visual-in 1.25s cubic-bezier(.16,1,.3,1) .35s both;
+}
+
+.idds-visual-orbit {
+    position: absolute;
+    width: 92%;
+    height: 92%;
+    border: 1px solid rgba(180,123,80,.2);
+    border-radius: 50%;
+    transform: rotate(-18deg);
+    animation: idds-orbit-slow 22s linear infinite;
+}
+
+.idds-visual-orbit::before,
+.idds-visual-orbit::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: var(--idds-caramel);
+    box-shadow: 0 0 0 8px rgba(180,123,80,.07);
+}
+
+.idds-visual-orbit::before {
+    width: 7px;
+    height: 7px;
+    top: 13%;
+    left: 17%;
+}
+
+.idds-visual-orbit::after {
+    width: 5px;
+    height: 5px;
+    right: 11%;
+    bottom: 20%;
+}
+
+.idds-visual {
+    position: relative;
+    width: min(100%, 690px);
+    height: 90%;
+    overflow: hidden;
+    border-radius: 52% 48% 7% 7% / 48% 45% 8% 8%;
+    box-shadow: 0 28px 70px rgba(66, 37, 23, .18);
+    transform: translateZ(0);
+}
+
+.idds-visual::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: linear-gradient(120deg, rgba(255,248,238,.16), transparent 45%, rgba(62,34,20,.08));
+    pointer-events: none;
+}
+
+.idds-visual img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+    animation: idds-image-breathe 9s ease-in-out infinite alternate;
+}
+
+.idds-visual-glow {
+    position: absolute;
+    z-index: 3;
+    width: 130px;
+    height: 130px;
+    right: 12%;
+    top: 14%;
+    border-radius: 50%;
+    background: rgba(255, 201, 126, .22);
+    filter: blur(25px);
+    animation: idds-glow 4s ease-in-out infinite alternate;
+}
+
+.idds-leaf {
+    position: absolute;
+    z-index: 4;
+    width: 42px;
+    height: 70px;
+    border-radius: 100% 0 100% 0;
+    background: rgba(180,123,80,.15);
+    border: 1px solid rgba(117,70,47,.16);
+    transform: rotate(32deg);
+    animation: idds-leaf-float 5.5s ease-in-out infinite;
+}
+
+.idds-leaf.one { left: 3%; bottom: 10%; }
+.idds-leaf.two { right: 3%; top: 5%; transform: rotate(125deg) scale(.72); animation-delay: -2s; }
+
+.idds-stamp {
+    position: absolute;
+    z-index: 5;
+    left: 7%;
+    bottom: 7%;
+    padding: 14px 18px;
+    border: 1px solid rgba(255,255,255,.42);
+    border-radius: 999px;
+    background: rgba(59,34,23,.62);
+    color: #fff8ef;
+    backdrop-filter: blur(10px);
+    font-size: 10px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    animation: idds-float 4s ease-in-out infinite;
+}
+
+.idds-corner-note {
+    position: absolute;
+    z-index: 5;
+    right: 4%;
+    bottom: 4%;
+    color: rgba(74,45,31,.5);
+    font-size: 10px;
+    letter-spacing: .18em;
+    writing-mode: vertical-rl;
+    animation: idds-fade .9s ease 1.2s both;
+}
+
+@keyframes idds-fade-up {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes idds-title-reveal {
+    from { opacity: 0; transform: translateY(38px); clip-path: inset(0 0 100% 0); }
+    to { opacity: 1; transform: translateY(0); clip-path: inset(0 0 0 0); }
+}
+
+@keyframes idds-accent-in {
+    from { opacity: 0; transform: translateY(24px) skewX(-5deg); }
+    to { opacity: 1; transform: translateY(0) skewX(0); }
+}
+
+@keyframes idds-line-grow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+}
+
+@keyframes idds-underline {
+    to { transform: scaleX(1); }
+}
+
+@keyframes idds-visual-in {
+    from { opacity: 0; transform: translateX(55px) scale(.94); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes idds-image-breathe {
+    from { transform: scale(1); }
+    to { transform: scale(1.045); }
+}
+
+@keyframes idds-glow {
+    from { opacity: .25; transform: scale(.86); }
+    to { opacity: .72; transform: scale(1.12); }
+}
+
+@keyframes idds-leaf-float {
+    0%,100% { transform: rotate(32deg) translate3d(0,0,0); }
+    50% { transform: rotate(25deg) translate3d(8px,-15px,0); }
+}
+
+@keyframes idds-float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+}
+
+@keyframes idds-orbit {
+    from { transform: translate3d(0,0,0) rotate(0); }
+    to { transform: translate3d(-18px,16px,0) rotate(10deg); }
+}
+
+@keyframes idds-orbit-slow {
+    to { transform: rotate(342deg); }
+}
+
+@keyframes idds-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@media (max-width: 1050px) {
+    .idds-home-page {
+        height: calc(100vh - 70px);
+        min-height: 620px;
+    }
+
+    .idds-home-inner {
+        gap: 30px;
+        padding-inline: 38px;
+    }
+
+    .idds-title {
+        font-size: clamp(48px, 6vw, 70px);
+    }
+
+    .idds-visual-wrap {
+        min-height: 420px;
+    }
+}
+
+@media (max-width: 760px) {
+    .idds-home-page {
+        height: auto;
+        min-height: calc(100vh - 64px);
+        overflow: hidden;
+    }
+
+    .idds-home-inner {
+        min-height: calc(100vh - 64px);
+        height: auto;
+        grid-template-columns: 1fr;
+        padding: 28px 22px 34px;
+        gap: 22px;
+    }
+
+    .idds-copy {
+        text-align: center;
+        max-width: 650px;
+        margin-inline: auto;
+    }
+
+    .idds-eyebrow {
+        justify-content: center;
+        letter-spacing: .22em;
+    }
+
+    .idds-eyebrow::before {
+        width: 34px;
+    }
+
+    .idds-title {
+        font-size: clamp(43px, 12vw, 64px);
+        line-height: .95;
+    }
+
+    .idds-description {
+        margin-inline: auto;
+        max-width: 520px;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    .idds-actions {
+        justify-content: center;
+        margin-top: 22px;
+    }
+
+    .idds-action {
+        min-width: 190px;
+        min-height: 52px;
+    }
+
+    .idds-visual-wrap {
+        height: 30vh;
+        min-height: 190px;
+        max-height: 280px;
+    }
+
+    .idds-visual {
+        width: min(88vw, 520px);
+        height: 100%;
+        border-radius: 48% 48% 10% 10% / 38% 38% 8% 8%;
+    }
+
+    .idds-visual-orbit,
+    .idds-corner-note {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .idds-home-page *,
+    .idds-home-page::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
+</style>
+
+<section class="idds-home-page" id="idds-home-page">
+    <div class="idds-home-inner">
+
+        <div class="idds-copy">
+            <p class="idds-eyebrow">INTEGRATED DIGITAL DINING SYSTEM</p>
+
+            <h1 class="idds-title">
+                A smarter way<br>
+                to experience <span class="accent">dining.</span>
             </h1>
 
-            <p class="hero-description">
-
-                From choosing your table to placing your order
-                and tracking it in real time, IDDS connects
-                every part of your dining experience.
-
+            <p class="idds-description">
+                From choosing your table to placing your order and tracking it in real time,
+                IDDS connects every part of your dining experience.
             </p>
 
+            <div class="idds-actions">
+                <a href="{% url 'accounts:login' %}" class="idds-action idds-primary">
+                    Customer Login <span aria-hidden="true">→</span>
+                </a>
 
-            <div class="hero-actions">
-
-                {% if user.is_authenticated and not user.is_staff %}
-
-                    <a
-                        href="{% url 'accounts:dashboard' %}"
-                        class="btn btn-primary"
-                    >
-                        My Dashboard
-                    </a>
-
-                    <a
-                        href="{% url 'table_selection' %}"
-                        class="text-link"
-                    >
-                        Start Dining →
-                    </a>
-
-                {% elif user.is_staff %}
-
-                    <a
-                        href="/admin/"
-                        class="btn btn-primary"
-                    >
-                        Staff Workspace
-                    </a>
-
-                    <a
-                        href="{% url 'table_selection' %}"
-                        class="text-link"
-                    >
-                        View Dining Experience →
-                    </a>
-
-                {% else %}
-
-                    <a
-                        href="{% url 'accounts:login' %}"
-                        class="btn btn-primary"
-                    >
-                        Customer Login
-                    </a>
-
-                    <a
-                        href="{% url 'accounts:signup' %}"
-                        class="text-link"
-                    >
-                        Create an Account →
-                    </a>
-                    <a 
-                        href="/restaurant/menu/" 
-                        class="text-link" 
-                    > 
-                        View Menu →
-                    </a>
-
-                {% endif %}
-
+                <a href="{% url 'accounts:signup' %}" class="idds-action idds-secondary">
+                    Create an Account <span aria-hidden="true">→</span>
+                </a>
             </div>
-
         </div>
 
-    </div>
-
-</section>
-
-
-<!-- =========================================================
-     CUSTOMER EXPERIENCE
-     ========================================================= -->
-
-<section class="experience-section">
-
-    <div class="container">
-
-        <div class="section-heading reveal">
-
-            <p class="eyebrow">
-                THE DINING EXPERIENCE
-            </p>
-
-            <h2>
-                Everything connected.
-                <br>
-                Everything simpler.
-            </h2>
-
-            <p>
-                IDDS brings the restaurant experience together
-                in one seamless digital journey.
-            </p>
-
-        </div>
-
-
-        <div class="feature-grid">
-
-
-            <!-- FEATURE 01 -->
-
-            <article class="feature-card reveal">
-
-                <span class="feature-number">
-                    01
-                </span>
-
-                <h3>
-                    Choose your table
-                </h3>
-
-                <p>
-                    Select an available table and begin
-                    your dining session without unnecessary
-                    waiting.
-                </p>
-
-            </article>
-
-
-            <!-- FEATURE 02 -->
-
-            <article class="feature-card reveal">
-
-                <span class="feature-number">
-                    02
-                </span>
-
-                <h3>
-                    Explore the menu
-                </h3>
-
-                <p>
-                    Browse dishes, discover chef specials
-                    and build your order directly from
-                    your table.
-                </p>
-
-            </article>
-
-
-            <!-- FEATURE 03 -->
-
-            <article class="feature-card reveal">
-
-                <span class="feature-number">
-                    03
-                </span>
-
-                <h3>
-                    Order effortlessly
-                </h3>
-
-                <p>
-                    Add your favourites to the cart,
-                    review your order and send it directly
-                    to the kitchen.
-                </p>
-
-            </article>
-
-
-            <!-- FEATURE 04 -->
-
-            <article class="feature-card reveal">
-
-                <span class="feature-number">
-                    04
-                </span>
-
-                <h3>
-                    Track your order
-                </h3>
-
-                <p>
-                    Follow your order as it moves through
-                    the restaurant and know when it is ready.
-                </p>
-
-            </article>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =========================================================
-     CUSTOMER JOURNEY
-     ========================================================= -->
-
-<section class="journey-section">
-
-    <div class="container">
-
-        <div class="journey-content reveal">
-
-            <p class="eyebrow">
-                ONE CONNECTED JOURNEY
-            </p>
-
-            <h2>
-                From table
-                <br>
-                to kitchen
-                <br>
-                to your plate.
-            </h2>
-
-            <p>
-                Your table, order, kitchen and billing
-                experience work together through one
-                integrated system.
-            </p>
-
-
-            <a
-                href="{% url 'table_selection' %}"
-                class="btn btn-secondary"
-            >
-                Begin Your Experience
-            </a>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =========================================================
-     CUSTOMER CTA
-     ========================================================= -->
-
-<section class="cta-section">
-
-    <div class="container">
-
-        <div class="cta-card reveal">
-
-            <p class="eyebrow">
-                READY WHEN YOU ARE
-            </p>
-
-            <h2>
-                Your table is waiting.
-            </h2>
-
-            <p>
-                Start your dining experience with IDDS.
-            </p>
-
-
-            {% if user.is_authenticated and not user.is_staff %}
-
-                <a
-                    href="{% url 'table_selection' %}"
-                    class="btn btn-primary"
-                >
-                    Choose a Table
-                </a>
-
-            {% elif user.is_authenticated and user.is_staff %}
-
-                <a
-                    href="/admin/"
-                    class="btn btn-primary"
-                >
-                    Open Staff Workspace
-                </a>
-
-            {% else %}
-
-                <a
-                    href="{% url 'accounts:login' %}"
-                    class="btn btn-primary"
-                >
-                    Customer Login
-                </a>
-
-            {% endif %}
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =========================================================
-     STAFF ACCESS
-     ========================================================= -->
-
-<section class="staff-access-section">
-
-    <div class="container">
-
-        <div class="staff-access-card reveal">
-
-            <div>
-
-                <p class="eyebrow">
-                    RESTAURANT TEAM
-                </p>
-
-                <h2>
-                    Staff access
-                </h2>
-
-                <p>
-                    Admins, chefs and waiters can sign in
-                    to their dedicated restaurant workspace.
-                </p>
-
+        <div class="idds-visual-wrap" aria-hidden="true">
+            <div class="idds-visual-orbit"></div>
+            <div class="idds-visual">
+                <img src="{% static 'images/idds-home-hero.png' %}" alt="Warm restaurant dining table">
+                <div class="idds-visual-glow"></div>
+                <div class="idds-leaf one"></div>
+                <div class="idds-leaf two"></div>
+                <div class="idds-stamp">A connected dining experience</div>
             </div>
-
-
-            <div class="staff-access-action">
-
-                <a
-                    href="{% url 'accounts:login' %}"
-                    class="text-link"
-                >
-                    Staff Login →
-                </a>
-
-            </div>
-
+            <div class="idds-corner-note">TABLE · MENU · ORDER · EXPERIENCE</div>
         </div>
 
     </div>
-
 </section>
 
+<script>
+(function () {
+    const root = document.getElementById("idds-home-page");
+    if (!root || root.dataset.iddsReady === "true") return;
+    root.dataset.iddsReady = "true";
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return;
+
+    const visual = root.querySelector(".idds-visual");
+    const copy = root.querySelector(".idds-copy");
+
+    root.addEventListener("pointermove", function (event) {
+        if (!visual || !copy || event.pointerType !== "mouse") return;
+
+        const rect = root.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - 0.5;
+        const y = (event.clientY - rect.top) / rect.height - 0.5;
+
+        visual.style.transform = `perspective(1100px) rotateY(${x * 2.2}deg) rotateX(${y * -1.6}deg)`;
+        copy.style.transform = `translate3d(${x * -3}px, ${y * -2}px, 0)`;
+    });
+
+    root.addEventListener("pointerleave", function () {
+        if (visual) visual.style.transform = "";
+        if (copy) copy.style.transform = "";
+    });
+})();
+</script>
 
 {% endblock %}
