@@ -73,7 +73,15 @@ class Ingredient(models.Model):
 
     @property
     def is_low_stock(self):
-        return self.current_stock <= self.minimum_stock
+        """
+        An ingredient is considered low stock when its
+        current stock reaches or falls below its reorder level.
+
+        The alert therefore remains active until the
+        administrator restocks the ingredient above the
+        reorder level.
+        """
+        return self.current_stock <= self.reorder_level
 
 
 class StockMovement(models.Model):
@@ -139,6 +147,22 @@ class StockMovement(models.Model):
 
 
 class MenuIngredient(models.Model):
+    """
+    Connects a menu item to the ingredients required
+    to prepare one quantity of that menu item.
+
+    Example:
+
+        Chicken Biryani
+            -> Chicken Breast
+            -> 0.500 kg
+
+    If the customer orders 2 Chicken Biryanis,
+    the kitchen will deduct:
+
+        0.500 x 2 = 1.000 kg
+    """
+
     menu_item_id = models.IntegerField()
 
     ingredient = models.ForeignKey(
@@ -162,5 +186,6 @@ class MenuIngredient(models.Model):
     def __str__(self):
         return (
             f"{self.menu_item_id} -> "
-            f"{self.ingredient.name}"
+            f"{self.ingredient.name} "
+            f"({self.quantity_required})"
         )

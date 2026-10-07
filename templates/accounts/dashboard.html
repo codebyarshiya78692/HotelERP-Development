@@ -1043,23 +1043,39 @@
                                 </button>
 
                             </form>
-
-
-                            <a
-                                href="{% url 'accounts:my_service_requests' %}"
-                                class="service-button"
+                            <form
+                                method="post"
+                                action="{% url 'accounts:create_service_request' %}"
                             >
+                                {% csrf_token %}
 
-                                <strong>
-                                    📞 My Requests
-                                </strong>
+                                <input
+                                    type="hidden"
+                                    name="request_type"
+                                    value="assistance"
+                                >
 
-                                <small>
-                                    View your service requests.
-                                </small>
+                                <input
+                                    type="hidden"
+                                    name="description"
+                                    value="Customer needs assistance at the table."
+                                
+                                >   
+                                <button
+                                    type="submit"
+                                    class="service-button"
+                                >
 
-                            </a>
+                                    <strong>
+                                        📞 Need Assistance
+                                    </strong>
 
+                                    <small>
+                                        Call waiter.
+                                    </small>
+
+                                </button>
+                            </form>
                         </div>
 
                     {% else %}

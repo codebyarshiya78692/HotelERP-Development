@@ -124,6 +124,8 @@ def start_dining(request, table_id):
     request.session["cart"] = {}
     request.session.modified = True
 
+    
+
     messages.success(
         request,
         f"Table {table.table_number} selected.",
@@ -401,6 +403,18 @@ def add_to_cart(request, item_id):
     request.session["cart"] = cart
     request.session.modified = True
 
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse({
+            "success": True,
+            "message": f"{item.name} added to your cart.",
+            "cart_count": sum(
+                int(value)
+                for value in cart.values()
+            ),
+            "quantity": cart[item_key],
+        })
+
+
     messages.success(
         request,
         f"{item.name} added to your cart.",
@@ -636,6 +650,19 @@ def update_cart(request, item_id):
 
     request.session["cart"] = cart
     request.session.modified = True
+
+    cart_count = sum(
+        int(value)
+        for value in cart.values()
+    )
+
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse({
+            "success": True,
+            "quantity": cart.get(item_key, 0),
+            "cart_count": cart_count,
+            "removed": item_key not in cart,
+        })
 
     return redirect("cart")
 

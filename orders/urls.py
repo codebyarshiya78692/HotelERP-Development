@@ -1,59 +1,59 @@
-from django.urls import path
+    from django.urls import path
 
-from . import views
-
-
-app_name = "orders"
+    from . import views
 
 
-urlpatterns = [
-    path(
-        "cart/",
-        views.cart,
-        name="cart",
-    ),
+    app_name = "orders"
 
-    path(
-        "cart/add/<int:item_id>/",
-        views.add_to_cart,
-        name="add_to_cart",
-    ),
 
-    path(
-        "cart/update/<int:item_id>/",
-        views.update_cart,
-        name="update_cart",
-    ),
+    urlpatterns = [
+        path(
+            "cart/",
+            views.cart,
+            name="cart",
+        ),
 
-    path(
-        "cart/remove/<int:item_id>/",
-        views.remove_from_cart,
-        name="remove_from_cart",
-    ),
+        path(
+            "cart/add/<int:item_id>/",
+            views.add_to_cart,
+            name="add_to_cart",
+        ),
 
-    path(
-        "place/",
-        views.place_order,
-        name="place_order",
-    ),
+        path(
+            "cart/update/<int:item_id>/",
+            views.update_cart,
+            name="update_cart",
+        ),
 
-    path(
-        "my-orders/",
-        views.my_orders,
-        name="my_orders",
-    ),
+        path(
+            "cart/remove/<int:item_id>/",
+            views.remove_from_cart,
+            name="remove_from_cart",
+        ),
 
-    # Customer order details
-    path(
-        "my-orders/<int:order_id>/",
-        views.order_detail,
-        name="order_detail",
-    ),
+        path(
+            "place/",
+            views.place_order,
+            name="place_order",
+        ),
 
-    # Customer order tracking
-    path(
-        "<int:order_id>/track/",
-        views.order_detail,
-        name="order_tracking",
-    ),
-]
+        path(
+            "my-orders/",
+            views.my_orders,
+            name="my_orders",
+        ),
+
+        # Customer order details
+        path(
+            "my-orders/<int:order_id>/",
+            views.order_detail,
+            name="order_detail",
+        ),
+
+        # Customer order tracking
+        path(
+            "<int:order_id>/track/",
+            views.order_detail,
+            name="order_tracking",
+        ),
+    ]

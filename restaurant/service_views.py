@@ -144,29 +144,22 @@ def _staff_access_denied(request):
 
 def service_requests(request):
 
+    # Staff must use the dedicated staff service page.
     if (
         request.user.is_authenticated
         and request.user.is_staff
     ):
+        return staff_service_requests(request)
 
-        return staff_service_requests(
-            request
-        )
-
-    dining_session = _get_customer_session(
-        request
-    )
+    dining_session = _get_customer_session(request)
 
     if dining_session is None:
-
         messages.error(
             request,
             "Please select a table before requesting service.",
         )
 
-        return redirect(
-            "table_selection"
-        )
+        return redirect("table_selection")
 
     requests = (
         ServiceRequest.objects
@@ -178,22 +171,21 @@ def service_requests(request):
             "session__table",
             "assigned_waiter",
         )
-        .order_by(
-            "-requested_at",
-        )
+        .order_by("-requested_at")
     )
 
     return render(
         request,
-        "restaurant/service_requests.html",
+        "orders/service_requests.html",
         {
             "session": dining_session,
             "table": dining_session.table,
             "service_requests": requests,
+            "active_count": requests.exclude(
+                status="completed"
+            ).count(),
         },
     )
-
-
 # ============================================================
 # CREATE CUSTOMER SERVICE REQUEST
 # ============================================================

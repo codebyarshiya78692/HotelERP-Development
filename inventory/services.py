@@ -2,175 +2,11 @@ from decimal import Decimal
 
 from django.db import transaction
 
-from .models import Ingredient, StockMovement
-
-
-# ============================================================
-# DEMO RECIPE RULES
-# ============================================================
-#
-# Quantities are per ONE menu item.
-#
-# These values are intentionally realistic demo quantities,
-# not production recipe specifications.
-# ============================================================
-
-def _recipe_for_menu_item(menu_name):
-    name = menu_name.lower()
-
-    recipe = {}
-
-    # --------------------------------------------------------
-    # MAIN PROTEINS
-    # --------------------------------------------------------
-
-    if "chicken" in name:
-        recipe["Chicken Breast"] = Decimal("0.180")
-
-    if "prawn" in name:
-        recipe["Prawns"] = Decimal("0.150")
-
-    if "salmon" in name:
-        recipe["Salmon"] = Decimal("0.120")
-
-    # --------------------------------------------------------
-    # PANEER / DAIRY
-    # --------------------------------------------------------
-
-    if "paneer" in name:
-        recipe["Paneer"] = Decimal("0.150")
-
-    if "butter" in name:
-        recipe["Butter"] = Decimal("0.020")
-
-    if (
-        "cream" in name
-        or "panna cotta" in name
-        or "crème brûlée" in name
-    ):
-        recipe["Cream"] = Decimal("0.030")
-
-    if (
-        "parmesan" in name
-        or "caesar" in name
-    ):
-        recipe["Parmesan Cheese"] = Decimal("0.020")
-
-    if (
-        "pizza" in name
-        or "cheese" in name
-    ):
-        recipe["Mozzarella"] = Decimal("0.080")
-
-    # --------------------------------------------------------
-    # RICE / GRAINS
-    # --------------------------------------------------------
-
-    if "biryani" in name:
-        recipe["Basmati Rice"] = Decimal("0.180")
-
-    # --------------------------------------------------------
-    # PRODUCE
-    # --------------------------------------------------------
-
-    if (
-        "tomato" in name
-        or "arrabbiata" in name
-        or "margherita" in name
-        or "butter chicken" in name
-    ):
-        recipe["Fresh Tomatoes"] = Decimal("0.080")
-
-    if (
-        "onion" in name
-        or "biryani" in name
-        or "curry" in name
-    ):
-        recipe["Onions"] = Decimal("0.050")
-
-    if "potato" in name:
-        recipe["Potatoes"] = Decimal("0.120")
-
-    if "mango" in name:
-        recipe["Mango"] = Decimal("0.120")
-
-    # --------------------------------------------------------
-    # BAKERY / FLOUR
-    # --------------------------------------------------------
-
-    if (
-        "pizza" in name
-        or "pasta" in name
-        or "ravioli" in name
-        or "tagliatelle" in name
-        or "tacos" in name
-        or "enchiladas" in name
-        or "quesadilla" in name
-    ):
-        recipe["Flour"] = Decimal("0.120")
-
-    # --------------------------------------------------------
-    # OIL
-    # --------------------------------------------------------
-
-    if any(
-        word in name
-        for word in [
-            "chicken",
-            "prawn",
-            "pizza",
-            "pasta",
-            "tikka",
-            "biryani",
-            "tempura",
-            "tacos",
-        ]
-    ):
-        recipe["Cooking Oil"] = Decimal("0.020")
-
-    # --------------------------------------------------------
-    # COFFEE / TEA
-    # --------------------------------------------------------
-
-    if any(
-        word in name
-        for word in [
-            "coffee",
-            "cappuccino",
-            "espresso",
-            "latte",
-        ]
-    ):
-        recipe["Coffee Beans"] = Decimal("0.018")
-
-    if any(
-        word in name
-        for word in [
-            "tea",
-            "matcha",
-        ]
-    ):
-        recipe["Green Tea"] = Decimal("0.004")
-
-    # --------------------------------------------------------
-    # SUGAR
-    # --------------------------------------------------------
-
-    if any(
-        word in name
-        for word in [
-            "dessert",
-            "cake",
-            "cheesecake",
-            "tiramisu",
-            "tea",
-            "coffee",
-            "cappuccino",
-        ]
-    ):
-        recipe["Sugar"] = Decimal("0.010")
-
-    return recipe
+from .models import (
+    Ingredient,
+    MenuIngredient,
+    StockMovement,
+)
 
 
 # ============================================================
@@ -180,91 +16,248 @@ def _recipe_for_menu_item(menu_name):
 @transaction.atomic
 def deduct_inventory_for_order(order):
     """
-    Deduct inventory when a Chef starts preparing an order.
+    Deduct inventory for an order using the actual
+    MenuIngredient recipe mappings.
 
-    This function:
-        1. Calculates required ingredients.
-        2. Checks stock before changing anything.
-        3. Prevents negative inventory.
-        4. Creates StockMovement records.
-        5. Records the order number as the reference.
+    Inventory is deducted ONLY when the kitchen marks
+    the order READY.
+
+    Example:
+
+        Chicken Biryani
+            -> Chicken Breast
+            -> 0.500 kg per dish
+
+        Customer orders 2 Chicken Biryanis
+
+            0.500 x 2
+            = 1.000 kg
+
+        Chicken Breast stock:
+
+            15.000 kg
+            - 1.000 kg
+            = 14.000 kg
+
+    The function:
+
+        1. Reads every item in the order.
+        2. Finds its MenuIngredient recipe rows.
+        3. Multiplies recipe quantity by ordered quantity.
+        4. Locks the ingredients.
+        5. Checks stock before making changes.
+        6. Deducts the required stock.
+        7. Creates StockMovement records.
+        8. Checks the existing reorder_level.
+        9. Returns low-stock information.
+       10. Prevents the same order from being deducted twice.
+
+    No hard-coded food names or recipe quantities are used.
     """
+
+    # ========================================================
+    # PREVENT DUPLICATE INVENTORY DEDUCTION
+    # ========================================================
+    #
+    # Each successful inventory deduction creates a usage
+    # StockMovement with:
+    #
+    #     reference = "Order #<id>"
+    #
+    # If this order has already created a usage movement,
+    # inventory has already been deducted for it.
+    #
+    # This protects against the same READY action being
+    # processed twice.
+    # ========================================================
+
+    order_reference = f"Order #{order.id}"
+
+    already_deducted = (
+        StockMovement.objects
+        .filter(
+            movement_type="usage",
+            reference=order_reference,
+        )
+        .exists()
+    )
+
+    if already_deducted:
+
+        return {
+            "success": True,
+            "message": (
+                f"Inventory for Order #{order.id} "
+                "has already been deducted."
+            ),
+            "used": [],
+            "low_stock": [],
+        }
 
     required = {}
 
-    for item in order.items.all():
+    # ========================================================
+    # COLLECT INGREDIENT REQUIREMENTS
+    # ========================================================
 
-        recipe = _recipe_for_menu_item(
-            item.item_name
+    order_items = (
+        order.items
+        .select_related("menu_item")
+        .all()
+    )
+
+    for order_item in order_items:
+
+        menu_item_id = order_item.menu_item_id
+
+        order_quantity = Decimal(
+            str(
+                order_item.quantity
+            )
         )
 
-        for ingredient_name, quantity in recipe.items():
-
-            total_quantity = (
-                quantity * item.quantity
+        recipe_rows = (
+            MenuIngredient.objects
+            .filter(
+                menu_item_id=menu_item_id,
             )
+            .select_related(
+                "ingredient",
+            )
+        )
 
-            required[ingredient_name] = (
-                required.get(
-                    ingredient_name,
-                    Decimal("0.000"),
+        for recipe_row in recipe_rows:
+
+            ingredient = recipe_row.ingredient
+
+            if not ingredient.is_active:
+                continue
+
+            recipe_quantity = Decimal(
+                str(
+                    recipe_row.quantity_required
                 )
-                + total_quantity
             )
+
+            if recipe_quantity <= 0:
+                continue
+
+            required_quantity = (
+                recipe_quantity
+                * order_quantity
+            )
+
+            ingredient_id = ingredient.id
+
+            if ingredient_id not in required:
+
+                required[ingredient_id] = {
+                    "ingredient": ingredient,
+                    "quantity": Decimal("0.000"),
+                }
+
+            required[
+                ingredient_id
+            ]["quantity"] += required_quantity
+
+    # ========================================================
+    # NO RECIPE CONFIGURED
+    # ========================================================
 
     if not required:
+
         return {
             "success": True,
-            "message": "No configured inventory ingredients for this order.",
+            "message": (
+                "No recipe-linked inventory items "
+                "are configured for this order."
+            ),
             "used": [],
+            "low_stock": [],
         }
 
-    ingredients = {}
+    # ========================================================
+    # LOCK INGREDIENTS AND CHECK STOCK
+    # ========================================================
 
-    for ingredient_name, quantity in required.items():
+    locked_ingredients = {}
+
+    for ingredient_id, data in required.items():
 
         ingredient = (
             Ingredient.objects
             .select_for_update()
             .filter(
-                name=ingredient_name,
+                id=ingredient_id,
                 is_active=True,
             )
             .first()
         )
 
-        # Ingredient is not in the seeded inventory.
-        # Skip it rather than blocking the order.
         if ingredient is None:
             continue
 
-        ingredients[ingredient_name] = ingredient
+        required_quantity = data[
+            "quantity"
+        ]
 
-        if ingredient.current_stock < quantity:
+        locked_ingredients[
+            ingredient_id
+        ] = ingredient
+
+        # ----------------------------------------------------
+        # DO NOT ALLOW NEGATIVE INVENTORY
+        # ----------------------------------------------------
+
+        if (
+            ingredient.current_stock
+            < required_quantity
+        ):
 
             return {
                 "success": False,
                 "message": (
-                    f"Not enough {ingredient.name}. "
-                    f"Required: {quantity} {ingredient.unit}. "
-                    f"Available: {ingredient.current_stock} "
+                    f"Not enough "
+                    f"{ingredient.name}. "
+                    f"Required: "
+                    f"{required_quantity} "
+                    f"{ingredient.unit}. "
+                    f"Available: "
+                    f"{ingredient.current_stock} "
                     f"{ingredient.unit}."
                 ),
                 "used": [],
+                "low_stock": [],
             }
+
+    # ========================================================
+    # DEDUCT STOCK
+    # ========================================================
 
     used = []
 
-    for ingredient_name, quantity in required.items():
+    low_stock = []
 
-        ingredient = ingredients.get(
-            ingredient_name
+    for ingredient_id, data in required.items():
+
+        ingredient = locked_ingredients.get(
+            ingredient_id
         )
 
         if ingredient is None:
             continue
 
-        ingredient.current_stock -= quantity
+        required_quantity = data[
+            "quantity"
+        ]
+
+        # ----------------------------------------------------
+        # DEDUCT
+        # ----------------------------------------------------
+
+        ingredient.current_stock -= (
+            required_quantity
+        )
 
         ingredient.save(
             update_fields=[
@@ -273,28 +266,100 @@ def deduct_inventory_for_order(order):
             ]
         )
 
+        # ----------------------------------------------------
+        # RECORD STOCK MOVEMENT
+        # ----------------------------------------------------
+
         StockMovement.objects.create(
             ingredient=ingredient,
             movement_type="usage",
-            quantity=quantity,
+            quantity=required_quantity,
             unit_cost=ingredient.cost_per_unit,
-            reference=f"Order #{order.id}",
+            reference=order_reference,
             notes=(
-                f"Automatic kitchen usage for "
-                f"Order #{order.id}."
+                "Automatic inventory deduction "
+                "when Chef marked the order READY."
             ),
         )
 
         used.append(
             {
                 "ingredient": ingredient.name,
-                "quantity": quantity,
+                "quantity": required_quantity,
                 "unit": ingredient.unit,
             }
         )
 
+        # ----------------------------------------------------
+        # LOW STOCK CHECK
+        # ----------------------------------------------------
+        #
+        # The existing reorder_level is used.
+        #
+        # Example:
+        #
+        # Current stock = 5 kg
+        # Reorder level = 5 kg
+        #
+        # 5 <= 5
+        #
+        # Therefore LOW STOCK.
+        #
+        # The alert remains active while stock is at or
+        # below reorder_level.
+        #
+        # Once Admin adds stock:
+        #
+        # 5 + 10 = 15 kg
+        #
+        # 15 > 5
+        #
+        # Low-stock condition is gone.
+        # ----------------------------------------------------
+
+        if (
+            ingredient.current_stock
+            <= ingredient.reorder_level
+        ):
+
+            low_stock.append(
+                {
+                    "ingredient": ingredient.name,
+                    "current_stock": (
+                        ingredient.current_stock
+                    ),
+                    "reorder_level": (
+                        ingredient.reorder_level
+                    ),
+                    "unit": ingredient.unit,
+                }
+            )
+
+    # ========================================================
+    # RESULT MESSAGE
+    # ========================================================
+
+    if low_stock:
+
+        low_stock_names = ", ".join(
+            item["ingredient"]
+            for item in low_stock
+        )
+
+        message = (
+            "Inventory updated successfully. "
+            f"Low stock: {low_stock_names}."
+        )
+
+    else:
+
+        message = (
+            "Inventory updated successfully."
+        )
+
     return {
         "success": True,
-        "message": "Inventory updated successfully.",
+        "message": message,
         "used": used,
+        "low_stock": low_stock,
     }

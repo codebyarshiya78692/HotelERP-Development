@@ -25,6 +25,21 @@ from restaurant.service_views import (
     complete_service_request,
 )
 
+# ============================================================
+# DJANGO ADMIN ACCESS
+# Only real administrators/superusers may enter Django Admin.
+# Chef and Waiter accounts remain operational staff.
+# ============================================================
+
+def admin_superuser_only(request):
+    return (
+        request.user.is_authenticated
+        and request.user.is_active
+        and request.user.is_superuser
+    )
+
+
+admin.site.has_permission = admin_superuser_only
 
 urlpatterns = [
 

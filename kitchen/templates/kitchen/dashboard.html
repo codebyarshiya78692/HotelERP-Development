@@ -57,9 +57,14 @@
 
     <div class="kitchen-orders">
 
-        {% if orders %}
+        {% if new_orders or accepted_orders or preparing_orders or ready_orders %}
 
-            {% for order in orders %}
+
+            <!-- =================================================
+                 NEW ORDERS
+                 ================================================= -->
+
+            {% for order in new_orders %}
 
                 <article class="kitchen-order-card">
 
@@ -157,70 +162,391 @@
 
                     <div class="order-actions">
 
-                        {% if order.status == "new" %}
+                        <form
+                            method="post"
+                            action="{% url 'kitchen:accept_order' order.id %}"
+                        >
 
-                            <form
-                                method="post"
-                                action="{% url 'kitchen:accept_order' order.id %}"
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
                             >
-                                {% csrf_token %}
+                                Accept Order
+                            </button>
 
-                                <button
-                                    type="submit"
-                                    class="btn btn-primary"
-                                >
-                                    Accept Order
-                                </button>
-
-                            </form>
-
-                        {% elif order.status == "accepted" %}
-
-                            <form
-                                method="post"
-                                action="{% url 'kitchen:start_preparing' order.id %}"
-                            >
-                                {% csrf_token %}
-
-                                <button
-                                    type="submit"
-                                    class="btn btn-primary"
-                                >
-                                    Start Preparing
-                                </button>
-
-                            </form>
-
-                        {% elif order.status == "preparing" %}
-
-                            <form
-                                method="post"
-                                action="{% url 'kitchen:mark_ready' order.id %}"
-                            >
-                                {% csrf_token %}
-
-                                <button
-                                    type="submit"
-                                    class="btn btn-primary"
-                                >
-                                    Mark Ready
-                                </button>
-
-                            </form>
-
-                        {% elif order.status == "ready" %}
-
-                            <span class="ready-message">
-                                ✓ Ready for waiter/service
-                            </span>
-
-                        {% endif %}
+                        </form>
 
                     </div>
 
                 </article>
 
             {% endfor %}
+
+
+            <!-- =================================================
+                 ACCEPTED ORDERS
+                 ================================================= -->
+
+            {% for order in accepted_orders %}
+
+                <article class="kitchen-order-card">
+
+                    <div class="order-card-header">
+
+                        <div>
+                            <span class="order-number">
+                                Order #{{ order.id }}
+                            </span>
+
+                            <h2>
+                                Table {{ order.session.table.table_number }}
+                            </h2>
+                        </div>
+
+                        <span class="order-status status-{{ order.status }}">
+                            {{ order.get_status_display }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="order-card-meta">
+
+                        <span>
+                            Customer:
+                            {{ order.session.customer_name|default:"Guest" }}
+                        </span>
+
+                        <span>
+                            Received:
+                            {{ order.created_at|date:"d M Y, h:i A" }}
+                        </span>
+
+                    </div>
+
+
+                    <!-- ORDER ITEMS -->
+
+                    <div class="order-items">
+
+                        <h3>Order Items</h3>
+
+                        <ul>
+
+                            {% for item in order.items.all %}
+
+                                <li>
+
+                                    <div>
+                                        <strong>
+                                            {{ item.item_name }}
+                                        </strong>
+
+                                        {% if item.special_instructions %}
+                                            <small>
+                                                {{ item.special_instructions }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+
+                                    <span>
+                                        × {{ item.quantity }}
+                                    </span>
+
+                                </li>
+
+                            {% endfor %}
+
+                        </ul>
+
+                    </div>
+
+
+                    <!-- SPECIAL INSTRUCTIONS -->
+
+                    {% if order.special_instructions %}
+
+                        <div class="kitchen-note">
+
+                            <strong>
+                                Special Instructions
+                            </strong>
+
+                            <p>
+                                {{ order.special_instructions }}
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <!-- ACTIONS -->
+
+                    <div class="order-actions">
+
+                        <form
+                            method="post"
+                            action="{% url 'kitchen:start_preparing' order.id %}"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                            >
+                                Start Preparing
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </article>
+
+            {% endfor %}
+
+
+            <!-- =================================================
+                 PREPARING ORDERS
+                 ================================================= -->
+
+            {% for order in preparing_orders %}
+
+                <article class="kitchen-order-card">
+
+                    <div class="order-card-header">
+
+                        <div>
+                            <span class="order-number">
+                                Order #{{ order.id }}
+                            </span>
+
+                            <h2>
+                                Table {{ order.session.table.table_number }}
+                            </h2>
+                        </div>
+
+                        <span class="order-status status-{{ order.status }}">
+                            {{ order.get_status_display }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="order-card-meta">
+
+                        <span>
+                            Customer:
+                            {{ order.session.customer_name|default:"Guest" }}
+                        </span>
+
+                        <span>
+                            Received:
+                            {{ order.created_at|date:"d M Y, h:i A" }}
+                        </span>
+
+                    </div>
+
+
+                    <!-- ORDER ITEMS -->
+
+                    <div class="order-items">
+
+                        <h3>Order Items</h3>
+
+                        <ul>
+
+                            {% for item in order.items.all %}
+
+                                <li>
+
+                                    <div>
+                                        <strong>
+                                            {{ item.item_name }}
+                                        </strong>
+
+                                        {% if item.special_instructions %}
+                                            <small>
+                                                {{ item.special_instructions }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+
+                                    <span>
+                                        × {{ item.quantity }}
+                                    </span>
+
+                                </li>
+
+                            {% endfor %}
+
+                        </ul>
+
+                    </div>
+
+
+                    <!-- SPECIAL INSTRUCTIONS -->
+
+                    {% if order.special_instructions %}
+
+                        <div class="kitchen-note">
+
+                            <strong>
+                                Special Instructions
+                            </strong>
+
+                            <p>
+                                {{ order.special_instructions }}
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <!-- ACTIONS -->
+
+                    <div class="order-actions">
+
+                        <form
+                            method="post"
+                            action="{% url 'kitchen:mark_ready' order.id %}"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                            >
+                                Mark Ready
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </article>
+
+            {% endfor %}
+
+
+            <!-- =================================================
+                 READY ORDERS
+                 ================================================= -->
+
+            {% for order in ready_orders %}
+
+                <article class="kitchen-order-card">
+
+                    <div class="order-card-header">
+
+                        <div>
+                            <span class="order-number">
+                                Order #{{ order.id }}
+                            </span>
+
+                            <h2>
+                                Table {{ order.session.table.table_number }}
+                            </h2>
+                        </div>
+
+                        <span class="order-status status-{{ order.status }}">
+                            {{ order.get_status_display }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="order-card-meta">
+
+                        <span>
+                            Customer:
+                            {{ order.session.customer_name|default:"Guest" }}
+                        </span>
+
+                        <span>
+                            Received:
+                            {{ order.created_at|date:"d M Y, h:i A" }}
+                        </span>
+
+                    </div>
+
+
+                    <!-- ORDER ITEMS -->
+
+                    <div class="order-items">
+
+                        <h3>Order Items</h3>
+
+                        <ul>
+
+                            {% for item in order.items.all %}
+
+                                <li>
+
+                                    <div>
+                                        <strong>
+                                            {{ item.item_name }}
+                                        </strong>
+
+                                        {% if item.special_instructions %}
+                                            <small>
+                                                {{ item.special_instructions }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+
+                                    <span>
+                                        × {{ item.quantity }}
+                                    </span>
+
+                                </li>
+
+                            {% endfor %}
+
+                        </ul>
+
+                    </div>
+
+
+                    <!-- SPECIAL INSTRUCTIONS -->
+
+                    {% if order.special_instructions %}
+
+                        <div class="kitchen-note">
+
+                            <strong>
+                                Special Instructions
+                            </strong>
+
+                            <p>
+                                {{ order.special_instructions }}
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <!-- ACTIONS -->
+
+                    <div class="order-actions">
+
+                        <span class="ready-message">
+                            ✓ Ready for waiter/service
+                        </span>
+
+                    </div>
+
+                </article>
+
+            {% endfor %}
+
 
         {% else %}
 

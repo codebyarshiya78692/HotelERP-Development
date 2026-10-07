@@ -1,10 +1,16 @@
-from decimal import Decimal
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import (
+    get_object_or_404,
+    redirect,
+    render,
+)
 from django.utils import timezone
+
+from inventory.services import (
+    deduct_inventory_for_order,
+)
 
 from orders.models import Order
 
@@ -54,253 +60,18 @@ def _deny_kitchen_access(request):
 
 
 # ============================================================
-# INVENTORY HELPERS
-# ============================================================
-
-def _deduct_inventory_for_order(order):
-    """
-    Deduct ingredient stock when the Chef actually starts
-    preparing an order.
-
-    The function is deliberately defensive because the current
-    project may contain menu/recipe inventory relations in
-    different versions.
-
-    Supported recipe patterns include:
-
-        menu_item.ingredients
-        menu_item.menu_ingredients
-        menu_item.recipe_items
-
-    A recipe quantity is multiplied by the ordered quantity.
-
-    Example:
-
-        Coffee recipe = 0.018 kg beans
-
-        Order quantity = 5
-
-        Deduction = 0.090 kg
-    """
-
-    try:
-        from inventory.models import Ingredient, StockMovement
-    except ImportError:
-        return {
-            "success": True,
-            "message": "Inventory module is not available.",
-        }
-
-    total_requirements = {}
-
-    # --------------------------------------------------------
-    # COLLECT INGREDIENT REQUIREMENTS
-    # --------------------------------------------------------
-
-    for order_item in order.items.select_related(
-        "menu_item"
-    ).all():
-
-        menu_item = order_item.menu_item
-        order_quantity = Decimal(
-            str(
-                order_item.quantity
-            )
-        )
-
-        possible_recipe_relations = [
-            "menu_ingredients",
-            "ingredients",
-            "recipe_items",
-        ]
-
-        recipe_manager = None
-
-        for relation_name in possible_recipe_relations:
-
-            try:
-
-                candidate = getattr(
-                    menu_item,
-                    relation_name,
-                )
-
-                if hasattr(
-                    candidate,
-                    "all",
-                ):
-                    recipe_manager = candidate
-                    break
-
-            except Exception:
-                continue
-
-        if recipe_manager is None:
-            continue
-
-        try:
-            recipe_rows = recipe_manager.all()
-        except Exception:
-            continue
-
-        for recipe_row in recipe_rows:
-
-            ingredient = getattr(
-                recipe_row,
-                "ingredient",
-                None,
-            )
-
-            if ingredient is None:
-
-                if isinstance(
-                    recipe_row,
-                    Ingredient,
-                ):
-                    ingredient = recipe_row
-
-            if ingredient is None:
-                continue
-
-            recipe_quantity = (
-                getattr(
-                    recipe_row,
-                    "quantity",
-                    None,
-                )
-                or getattr(
-                    recipe_row,
-                    "quantity_required",
-                    None,
-                )
-                or getattr(
-                    recipe_row,
-                    "amount",
-                    None,
-                )
-            )
-
-            if recipe_quantity is None:
-                continue
-
-            required_quantity = (
-                Decimal(
-                    str(recipe_quantity)
-                )
-                * order_quantity
-            )
-
-            ingredient_id = ingredient.id
-
-            if ingredient_id not in total_requirements:
-
-                total_requirements[
-                    ingredient_id
-                ] = {
-                    "ingredient": ingredient,
-                    "quantity": Decimal("0.000"),
-                }
-
-            total_requirements[
-                ingredient_id
-            ]["quantity"] += required_quantity
-
-    # --------------------------------------------------------
-    # IF THIS ORDER HAS NO RECIPE DATA YET
-    # --------------------------------------------------------
-
-    if not total_requirements:
-
-        return {
-            "success": True,
-            "message": (
-                "No recipe-linked inventory items were "
-                "configured for this order."
-            ),
-        }
-
-    # --------------------------------------------------------
-    # CHECK STOCK BEFORE DEDUCTING ANYTHING
-    # --------------------------------------------------------
-
-    for data in total_requirements.values():
-
-        ingredient = data["ingredient"]
-        required_quantity = data["quantity"]
-
-        if ingredient.current_stock < required_quantity:
-
-            return {
-                "success": False,
-                "message": (
-                    f"Insufficient stock for "
-                    f"{ingredient.name}. "
-                    f"Available: "
-                    f"{ingredient.current_stock} "
-                    f"{ingredient.unit}; "
-                    f"required: "
-                    f"{required_quantity} "
-                    f"{ingredient.unit}."
-                ),
-            }
-
-    # --------------------------------------------------------
-    # DEDUCT STOCK
-    # --------------------------------------------------------
-
-    for data in total_requirements.values():
-
-        ingredient = data["ingredient"]
-        required_quantity = data["quantity"]
-
-        ingredient.current_stock = (
-            ingredient.current_stock
-            - required_quantity
-        )
-
-        ingredient.save(
-            update_fields=[
-                "current_stock",
-                "updated_at",
-            ],
-        )
-
-        StockMovement.objects.create(
-            ingredient=ingredient,
-            movement_type="usage",
-            quantity=required_quantity,
-            unit_cost=ingredient.cost_per_unit,
-            reference=f"Order #{order.id}",
-            notes=(
-                "Inventory consumed when Chef "
-                "started preparing the order."
-            ),
-        )
-
-    return {
-        "success": True,
-        "message": "Inventory deducted successfully.",
-    }
-
-
-# ============================================================
 # KITCHEN DASHBOARD
 # ============================================================
 
 @login_required
 def kitchen_dashboard(request):
     """
-    Chef dashboard.
+    Main Chef kitchen dashboard.
 
-    NEW orders:
-        Visible to every Chef.
+    NEW orders are visible to all Chefs.
 
-    ACCEPTED / PREPARING:
-        Visible only to the Chef who accepted the order.
-
-    READY:
-        No longer part of the Chef's active work queue.
-        It has moved to the waiter workflow.
+    Once a Chef accepts an order, that order is assigned
+    to that Chef and moves into their personal workflow.
     """
 
     if not _staff_only(request):
@@ -309,12 +80,14 @@ def kitchen_dashboard(request):
             request
         )
 
-    chef = request.user
-
     # --------------------------------------------------------
     # NEW ORDERS
+    # --------------------------------------------------------
     #
-    # Every Chef can see these.
+    # All Chefs can see new orders.
+    #
+    # Once accepted, assigned_chef is set and the order
+    # disappears from the unassigned queue.
     # --------------------------------------------------------
 
     new_orders = (
@@ -336,52 +109,60 @@ def kitchen_dashboard(request):
     )
 
     # --------------------------------------------------------
-    # THIS CHEF'S ASSIGNED ORDERS
+    # THIS CHEF'S ACCEPTED ORDERS
     # --------------------------------------------------------
 
-    my_orders = (
+    accepted_orders = (
         Order.objects
         .filter(
-            assigned_chef=chef,
-            status__in=[
-                "accepted",
-                "preparing",
-            ],
+            status="accepted",
+            assigned_chef=request.user,
         )
         .select_related(
             "session",
             "session__table",
-            "assigned_chef",
         )
         .prefetch_related(
             "items",
         )
         .order_by(
+            "accepted_at",
             "created_at",
         )
     )
 
-    accepted_orders = my_orders.filter(
-        status="accepted",
-    )
+    # --------------------------------------------------------
+    # THIS CHEF'S PREPARING ORDERS
+    # --------------------------------------------------------
 
-    preparing_orders = my_orders.filter(
-        status="preparing",
+    preparing_orders = (
+        Order.objects
+        .filter(
+            status="preparing",
+            assigned_chef=request.user,
+        )
+        .select_related(
+            "session",
+            "session__table",
+        )
+        .prefetch_related(
+            "items",
+        )
+        .order_by(
+            "preparing_at",
+            "created_at",
+        )
     )
 
     # --------------------------------------------------------
-    # READY ORDERS
-    #
-    # They are included only for compatibility with the
-    # existing template. They are no longer treated as the
-    # Chef's active workload.
+    # RECENTLY READY ORDERS
     # --------------------------------------------------------
 
     ready_orders = (
         Order.objects
         .filter(
             status="ready",
-            assigned_chef=chef,
+            assigned_chef=request.user,
         )
         .select_related(
             "session",
@@ -391,24 +172,21 @@ def kitchen_dashboard(request):
             "items",
         )
         .order_by(
-            "ready_at",
-        )
+            "-ready_at",
+        )[:20]
     )
 
-    # Existing template expects "orders".
-    orders = list(new_orders) + list(my_orders)
+    context = {
+        "new_orders": new_orders,
+        "accepted_orders": accepted_orders,
+        "preparing_orders": preparing_orders,
+        "ready_orders": ready_orders,
+    }
 
     return render(
         request,
         "kitchen/dashboard.html",
-        {
-            "orders": orders,
-            "new_orders": new_orders,
-            "accepted_orders": accepted_orders,
-            "preparing_orders": preparing_orders,
-            "ready_orders": ready_orders,
-            "chef": chef,
-        },
+        context,
     )
 
 
@@ -420,9 +198,10 @@ def kitchen_dashboard(request):
 @transaction.atomic
 def accept_order(request, order_id):
     """
-    Atomically claim a NEW order.
+    Allow a Chef to claim one NEW order.
 
-    This prevents two chefs from accepting the same order.
+    select_for_update() prevents two Chefs from accepting
+    the same order at the same time.
     """
 
     if not _staff_only(request):
@@ -437,32 +216,26 @@ def accept_order(request, order_id):
             "kitchen:dashboard"
         )
 
-    # select_for_update prevents two chefs from claiming
-    # the same order at the same time.
     order = get_object_or_404(
         Order.objects
         .select_for_update()
         .select_related(
             "session",
             "session__table",
+        )
+        .prefetch_related(
+            "items",
         ),
         id=order_id,
     )
 
-    # --------------------------------------------------------
-    # ONLY COMPLETELY UNASSIGNED NEW ORDERS CAN BE CLAIMED.
-    # --------------------------------------------------------
-
-    if (
-        order.status != "new"
-        or order.assigned_chef_id is not None
-    ):
+    if order.status != "new":
 
         messages.warning(
             request,
             (
-                f"Order #{order.id} has already been "
-                "accepted by another chef."
+                "This order is no longer available "
+                "for acceptance."
             ),
         )
 
@@ -470,14 +243,28 @@ def accept_order(request, order_id):
             "kitchen:dashboard"
         )
 
-    order.status = "accepted"
+    if order.assigned_chef_id is not None:
+
+        messages.warning(
+            request,
+            (
+                "This order has already been "
+                "accepted by another Chef."
+            ),
+        )
+
+        return redirect(
+            "kitchen:dashboard"
+        )
+
     order.assigned_chef = request.user
+    order.status = "accepted"
     order.accepted_at = timezone.now()
 
     order.save(
         update_fields=[
-            "status",
             "assigned_chef",
+            "status",
             "accepted_at",
             "updated_at",
         ],
@@ -486,8 +273,8 @@ def accept_order(request, order_id):
     messages.success(
         request,
         (
-            f"Order #{order.id} is now assigned "
-            f"to Chef {request.user.username}."
+            f"Order #{order.id} has been "
+            "assigned to you."
         ),
     )
 
@@ -506,8 +293,12 @@ def start_preparing(request, order_id):
     """
     Start preparing an order owned by this Chef.
 
-    Inventory is deducted here because this is the point at
-    which the kitchen actually begins consuming ingredients.
+    IMPORTANT:
+
+    Inventory is NOT deducted here.
+
+    Stock is deducted only when the Chef marks the
+    order READY.
     """
 
     if not _staff_only(request):
@@ -550,27 +341,6 @@ def start_preparing(request, order_id):
             "kitchen:dashboard"
         )
 
-    # --------------------------------------------------------
-    # INVENTORY
-    # --------------------------------------------------------
-
-    inventory_result = (
-        _deduct_inventory_for_order(
-            order
-        )
-    )
-
-    if not inventory_result["success"]:
-
-        messages.error(
-            request,
-            inventory_result["message"],
-        )
-
-        return redirect(
-            "kitchen:dashboard"
-        )
-
     order.status = "preparing"
     order.preparing_at = timezone.now()
 
@@ -586,7 +356,8 @@ def start_preparing(request, order_id):
         request,
         (
             f"Order #{order.id} is now being prepared. "
-            "Required inventory has been deducted."
+            "Inventory will be deducted when the "
+            "order is marked READY."
         ),
     )
 
@@ -603,10 +374,27 @@ def start_preparing(request, order_id):
 @transaction.atomic
 def mark_ready(request, order_id):
     """
-    Chef marks their own preparing order as ready.
+    Chef marks their own preparing order as READY.
 
-    Once ready, the Chef's workflow is finished.
-    The order is handed over to the Waiter.
+    THIS is the point where inventory is deducted.
+
+    Flow:
+
+        Preparing
+            ↓
+        Chef clicks READY
+            ↓
+        Calculate recipe quantities
+            ↓
+        Check stock
+            ↓
+        Deduct inventory
+            ↓
+        Create StockMovement
+            ↓
+        Check reorder level
+            ↓
+        Mark order READY
     """
 
     if not _staff_only(request):
@@ -628,6 +416,9 @@ def mark_ready(request, order_id):
             "session",
             "session__table",
             "assigned_chef",
+        )
+        .prefetch_related(
+            "items",
         ),
         id=order_id,
         assigned_chef=request.user,
@@ -647,6 +438,40 @@ def mark_ready(request, order_id):
             "kitchen:dashboard"
         )
 
+    # ========================================================
+    # DEDUCT INVENTORY
+    # ========================================================
+
+    inventory_result = (
+        deduct_inventory_for_order(
+            order
+        )
+    )
+
+    # --------------------------------------------------------
+    # INSUFFICIENT STOCK
+    # --------------------------------------------------------
+    #
+    # If there isn't enough stock, the order remains
+    # PREPARING and therefore the Chef can try again
+    # after Admin restocks the ingredient.
+    # --------------------------------------------------------
+
+    if not inventory_result["success"]:
+
+        messages.error(
+            request,
+            inventory_result["message"],
+        )
+
+        return redirect(
+            "kitchen:dashboard"
+        )
+
+    # ========================================================
+    # MARK ORDER READY
+    # ========================================================
+
     order.status = "ready"
     order.ready_at = timezone.now()
 
@@ -658,17 +483,59 @@ def mark_ready(request, order_id):
         ],
     )
 
-    messages.success(
-        request,
-        (
-            f"Order #{order.id} is READY. "
-            "It has moved to the waiter workflow."
-        ),
+    # ========================================================
+    # LOW STOCK ALERT
+    # ========================================================
+
+    low_stock = inventory_result.get(
+        "low_stock",
+        [],
     )
+
+    if low_stock:
+
+        low_stock_messages = []
+
+        for item in low_stock:
+
+            low_stock_messages.append(
+                (
+                    f"{item['ingredient']} "
+                    f"({item['current_stock']} "
+                    f"{item['unit']} remaining; "
+                    f"reorder level "
+                    f"{item['reorder_level']} "
+                    f"{item['unit']})"
+                )
+            )
+
+        messages.warning(
+            request,
+            (
+                f"Order #{order.id} is READY. "
+                "LOW STOCK: "
+                + "; ".join(
+                    low_stock_messages
+                )
+                + ". Please restock."
+            ),
+        )
+
+    else:
+
+        messages.success(
+            request,
+            (
+                f"Order #{order.id} is READY. "
+                "Inventory has been updated."
+            ),
+        )
 
     return redirect(
         "kitchen:dashboard"
     )
+
+
 # ============================================================
 # CUSTOMER SERVICE REQUESTS
 # ============================================================
@@ -688,19 +555,28 @@ def service_requests_dashboard(request):
     """
 
     if not request.user.is_authenticated:
-        return redirect("accounts:login")
+
+        return redirect(
+            "accounts:login"
+        )
 
     is_waiter = request.user.groups.filter(
         name__iexact="Waiter"
     ).exists()
 
     if not is_waiter:
+
         messages.error(
             request,
-            "Service requests are restricted to Waiter staff.",
+            (
+                "Service requests are restricted "
+                "to Waiter staff."
+            ),
         )
 
-        return redirect("home")
+        return redirect(
+            "home"
+        )
 
     from orders.models import ServiceRequest
 
@@ -804,7 +680,10 @@ def service_requests_dashboard(request):
 
 @login_required
 @transaction.atomic
-def accept_service_request(request, request_id):
+def accept_service_request(
+    request,
+    request_id,
+):
     """
     Allow one Waiter to claim a customer service request.
 
@@ -816,21 +695,31 @@ def accept_service_request(request, request_id):
     """
 
     if not request.user.is_authenticated:
-        return redirect("accounts:login")
+
+        return redirect(
+            "accounts:login"
+        )
 
     is_waiter = request.user.groups.filter(
         name__iexact="Waiter"
     ).exists()
 
     if not is_waiter:
+
         messages.error(
             request,
-            "Only Waiter staff can accept service requests.",
+            (
+                "Only Waiter staff can "
+                "accept service requests."
+            ),
         )
 
-        return redirect("home")
+        return redirect(
+            "home"
+        )
 
     if request.method != "POST":
+
         return redirect(
             "kitchen:service_requests"
         )
@@ -853,6 +742,7 @@ def accept_service_request(request, request_id):
     )
 
     if service_request.status != "requested":
+
         messages.warning(
             request,
             (
@@ -866,10 +756,12 @@ def accept_service_request(request, request_id):
         )
 
     service_request.status = "accepted"
+    service_request.assigned_waiter = request.user
 
     service_request.save(
         update_fields=[
             "status",
+            "assigned_waiter",
         ],
     )
 
@@ -893,27 +785,40 @@ def accept_service_request(request, request_id):
 
 @login_required
 @transaction.atomic
-def complete_service_request(request, request_id):
+def complete_service_request(
+    request,
+    request_id,
+):
     """
     Mark an accepted Waiter service request as completed.
     """
 
     if not request.user.is_authenticated:
-        return redirect("accounts:login")
+
+        return redirect(
+            "accounts:login"
+        )
 
     is_waiter = request.user.groups.filter(
         name__iexact="Waiter"
     ).exists()
 
     if not is_waiter:
+
         messages.error(
             request,
-            "Only Waiter staff can complete service requests.",
+            (
+                "Only Waiter staff can "
+                "complete service requests."
+            ),
         )
 
-        return redirect("home")
+        return redirect(
+            "home"
+        )
 
     if request.method != "POST":
+
         return redirect(
             "kitchen:service_requests"
         )
@@ -936,6 +841,7 @@ def complete_service_request(request, request_id):
     )
 
     if service_request.status != "accepted":
+
         messages.warning(
             request,
             (

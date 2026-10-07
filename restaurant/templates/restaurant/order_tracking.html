@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}
 IDDS | Track Order #{{ order.id }}
@@ -26,7 +26,7 @@ IDDS | Track Order #{{ order.id }}
 
             <p>
                 Table {{ order.session.table.table_number }}
-                · Stay updated while our kitchen prepares your meal.
+                Â· Stay updated while our kitchen prepares your meal.
             </p>
 
         </div>
@@ -79,11 +79,11 @@ IDDS | Track Order #{{ order.id }}
 
                             {% if forloop.counter0 < current_index %}
 
-                                ✓
+                                âœ“
 
                             {% elif order.status == status_code %}
 
-                                ●
+                                â—
 
                             {% else %}
 
@@ -139,11 +139,11 @@ IDDS | Track Order #{{ order.id }}
 
                         <span>
                             {{ item.item_name }}
-                            × {{ item.quantity }}
+                            Ã— {{ item.quantity }}
                         </span>
 
                         <strong>
-                            ₹{{ item.total_price|floatformat:2 }}
+                            â‚¹{{ item.total_price|floatformat:2 }}
                         </strong>
 
                     </div>
@@ -162,7 +162,7 @@ IDDS | Track Order #{{ order.id }}
                 </span>
 
                 <strong>
-                    ₹{{ order.total_amount|floatformat:2 }}
+                    â‚¹{{ order.total_amount|floatformat:2 }}
                 </strong>
 
             </div>
@@ -177,16 +177,11 @@ IDDS | Track Order #{{ order.id }}
                     class="btn btn-primary"
                 >
                     Order More
-                    <span>→</span>
+                    <span>â†’</span>
                 </a>
 
 
-                <a
-                    href="{% url 'service_requests' %}"
-                    class="btn btn-secondary"
-                >
-                    Request Service
-                </a>
+                
 
 
                 {% if order.session.bill %}
@@ -208,17 +203,48 @@ IDDS | Track Order #{{ order.id }}
             <div class="empty-state">
 
                 <p class="eyebrow">
-                    NEED SOMETHING?
+                    NEED ASSISTANCE?
                 </p>
 
                 <h3>
-                    Our team is here to help.
+                    Need help at your table?.
                 </h3>
 
                 <p class="muted">
-                    Request water, cutlery, assistance, or your bill
-                    without leaving your table.
+                    Call a waiter without leaving your table.
                 </p>
+                <form
+                    method="post"
+                    action="{% url 'accounts:create_service_request' %}"
+                >
+                {% csrf_token %}
+
+                    <input
+                        type="hidden"
+                        name="request_type"
+                        value="assistance"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="description"
+                        value="Customer needs assistance at the table."
+                    >
+
+                    <input
+                        type="hidden"
+                        name="next"
+                        value="{{ request.get_full_path }}"
+                    >
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        📞 Need Assistance
+                    </button>
+
+                </form>
 
             </div>
 
@@ -243,3 +269,5 @@ IDDS | Track Order #{{ order.id }}
 </script>
 
 {% endblock %}
+
+

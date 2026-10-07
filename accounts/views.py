@@ -1,8 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from inventory.models import Ingredient
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, F
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.urls import reverse
@@ -80,8 +81,6 @@ def _staff_role(user):
 
     if "waiter" in username:
         return "waiter"
-
-
 
     return "customer"
 
@@ -196,6 +195,51 @@ def customer_login(request):
             return redirect("accounts:waiter_dashboard")
 
         if role == "admin":
+
+            # ------------------------------------------------
+            # ADMIN LOW-STOCK ALERT
+            # ------------------------------------------------
+
+            low_stock = Ingredient.objects.filter(
+                is_active=True,
+                current_stock__lte=F("reorder_level"),
+            )
+
+            if low_stock.exists():
+
+                ingredients = list(low_stock)
+
+                if len(ingredients) == 1:
+
+                    ingredient = ingredients[0]
+
+                    messages.warning(
+                        request,
+                        (
+                            f"⚠ LOW STOCK ALERT: {ingredient.name} is at "
+                            f"{ingredient.current_stock} {ingredient.unit}. "
+                            f"Reorder level: "
+                            f"{ingredient.reorder_level} {ingredient.unit}. "
+                            f"Please restock this ingredient."
+                        ),
+                    )
+
+                else:
+
+                    names = ", ".join(
+                        ingredient.name
+                        for ingredient in ingredients
+                    )
+
+                    messages.warning(
+                        request,
+                        (
+                            f"⚠ LOW STOCK ALERT: {len(ingredients)} "
+                            f"ingredients need attention: {names}. "
+                            f"Please restock them."
+                        ),
+                    )
+
             return redirect("/admin/")
 
         # IMPORTANT:
@@ -217,11 +261,13 @@ def customer_login(request):
         },
     )
 
+
 @login_required
 def customer_logout(request):
     """
     Log out the current user.
     """
+
     logout(request)
 
     messages.success(
@@ -286,20 +332,32 @@ def dashboard(request):
         .first()
     )
 
-    customer_orders = (
-        Order.objects
-        .filter(session__customer_name=request.user.username)
-        .select_related(
-            "session",
-            "session__table",
+    # --------------------------------------------------------
+    # SHOW ONLY ORDERS FROM THE CUSTOMER'S CURRENT SESSION
+    # --------------------------------------------------------
+
+    if active_session:
+        customer_orders = (
+            Order.objects
+            .filter(
+                session=active_session
+            )
+            .select_related(
+                "session",
+                "session__table",
+                "assigned_chef",
+                "assigned_waiter",
+            )
+            .prefetch_related("items")
+            .order_by("-created_at")
         )
-        .prefetch_related("items")
-        .order_by("-created_at")
-    )
+    else:
+        customer_orders = Order.objects.none()
 
     recent_orders = customer_orders[:10]
 
     cart = request.session.get("cart", {})
+
     cart_count = sum(
         int(quantity)
         for quantity in cart.values()
@@ -355,6 +413,7 @@ def waiter_dashboard(request):
         "water",
         "cutlery",
         "bill",
+        "assistance",
     ]
 
     # --------------------------------------------------------
@@ -422,6 +481,8 @@ def waiter_dashboard(request):
         "accounts/waiter_dashboard.html",
         context,
     )
+
+
 # ============================================================
 # WAITER SERVICE REQUEST - ACCEPT
 # ============================================================
@@ -466,6 +527,7 @@ def waiter_accept_request(request, request_id):
         "water",
         "cutlery",
         "bill",
+        "assistance",
     ]:
         messages.error(
             request,
@@ -568,6 +630,8 @@ def waiter_complete_request(request, request_id):
     )
 
     return redirect("accounts:waiter_dashboard")
+
+
 # ============================================================
 # WAITER FOOD ORDER - TAKE / CLAIM
 # ============================================================
@@ -580,15 +644,6 @@ def waiter_take_order(request, order_id):
     Claim a READY food order.
 
     Only one waiter can claim a particular order.
-
-    READY
-       ↓
-    waiter2 clicks Take Order
-       ↓
-    assigned_waiter = waiter2
-       ↓
-    waiter2 can serve it
-    other waiters cannot claim it
     """
 
     if not _is_waiter(request.user):
@@ -655,6 +710,8 @@ def waiter_take_order(request, order_id):
     return redirect(
         "accounts:waiter_dashboard"
     )
+
+
 # ============================================================
 # WAITER FOOD ORDER - SERVE
 # ============================================================
@@ -674,7 +731,9 @@ def waiter_serve_order(request, order_id):
             request,
             "You are not authorized to perform waiter actions.",
         )
-        return redirect("accounts:dashboard")
+        return redirect(
+            "accounts:dashboard"
+        )
 
     if request.method != "POST":
         messages.error(
@@ -715,6 +774,7 @@ def waiter_serve_order(request, order_id):
     order.save(
         update_fields=[
             "status",
+            "assigned_waiter",
             "served_at",
             "updated_at",
         ]
@@ -728,6 +788,8 @@ def waiter_serve_order(request, order_id):
     return redirect(
         "accounts:waiter_dashboard"
     )
+
+
 # ============================================================
 # STAFF DASHBOARD
 # ============================================================
@@ -845,6 +907,7 @@ def _get_customer_order_queryset(user):
 
 
 @login_required
+@transaction.atomic
 def start_session(request, table_id):
     """
     Start a dining session for the selected table.
@@ -858,7 +921,7 @@ def start_session(request, table_id):
         return redirect("accounts:dashboard")
 
     table = get_object_or_404(
-        DiningTable,
+        DiningTable.objects.select_for_update(),
         pk=table_id,
     )
 
@@ -866,12 +929,34 @@ def start_session(request, table_id):
         request.user
     )
 
+    # --------------------------------------------------------
+    # CUSTOMER ALREADY HAS AN ACTIVE TABLE
+    # --------------------------------------------------------
+
     if existing_session:
         messages.warning(
             request,
-            "You already have an active dining session.",
+            (
+                f"You already have an active dining session "
+                f"at Table {existing_session.table.table_number}."
+            ),
         )
-        return redirect("accounts:dashboard")
+
+        # Keep the browser connected to the customer's
+        # existing dining session and table.
+        request.session["dining_session_id"] = existing_session.id
+        request.session["table_id"] = existing_session.table.id
+        request.session.setdefault("cart", {})
+        request.session.modified = True
+
+        return redirect(
+            "restaurant:menu_for_table",
+            table_id=existing_session.table.id,
+        )
+
+    # --------------------------------------------------------
+    # SELECTED TABLE MUST BE AVAILABLE
+    # --------------------------------------------------------
 
     if table.status != "available":
         messages.error(
@@ -879,6 +964,10 @@ def start_session(request, table_id):
             "This table is currently unavailable.",
         )
         return redirect("accounts:dashboard")
+
+    # --------------------------------------------------------
+    # CREATE NEW DINING SESSION
+    # --------------------------------------------------------
 
     session = DiningSession.objects.create(
         customer_name=request.user.username,
@@ -894,8 +983,8 @@ def start_session(request, table_id):
         ]
     )
 
-    # Keep the selected dining session in the browser session so
-    # the public menu, cart and order flow can identify the
+    # Keep the selected dining session in the browser session
+    # so the public menu, cart and order flow can identify the
     # customer's active table.
     request.session["dining_session_id"] = session.id
     request.session["table_id"] = table.id
@@ -960,21 +1049,27 @@ def menu(request, table_id=None):
 @login_required
 def my_orders(request):
     """
-    Display the logged-in customer's orders.
+    Redirect the customer directly to their latest order tracking page.
     """
 
-    orders = _get_customer_order_queryset(
-        request.user
+    order = (
+        _get_customer_order_queryset(request.user)
+        .first()
     )
 
-    context = {
-        "orders": orders,
-    }
+    if order:
+        return redirect(
+            "order_tracking",
+            order_id=order.id,
+        )
 
-    return render(
+    messages.info(
         request,
-        "orders/my_orders.html",
-        context,
+        "You do not have any orders yet.",
+    )
+
+    return redirect(
+        "accounts:dashboard"
     )
 
 
@@ -1005,6 +1100,8 @@ def order_detail(request, order_id):
         "orders/order_detail.html",
         context,
     )
+
+
 # ============================================================
 # CUSTOMER - SERVICE REQUEST
 # ============================================================
@@ -1083,6 +1180,7 @@ def create_service_request(request):
         "water",
         "cutlery",
         "bill",
+        "assistance",
     }:
         messages.success(
             request,
@@ -1093,6 +1191,14 @@ def create_service_request(request):
             request,
             "Your request has been sent to the kitchen team.",
         )
+
+    next_url = request.POST.get("next")
+
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+    ):
+        return redirect(next_url)
 
     return redirect(
         "accounts:dashboard"
@@ -1320,25 +1426,38 @@ def track_order(request, order_id):
 
 @login_required
 def my_service_requests(request):
-    """
-    Display the current customer's service requests.
-    """
 
-    active_requests = (
-        ServiceRequest.objects
-        .filter(
-            session__customer_name=request.user.username,
-        )
-        .select_related(
-            "session",
-            "session__table",
-            "assigned_waiter",
-        )
-        .order_by("-requested_at")
+    session = _get_customer_active_session(
+        request.user
     )
 
+    if session:
+
+        service_requests = (
+            ServiceRequest.objects
+            .filter(
+                session=session,
+            )
+            .select_related(
+                "session",
+                "session__table",
+                "assigned_waiter",
+            )
+            .order_by("-requested_at")
+        )
+
+    else:
+
+        service_requests = (
+            ServiceRequest.objects.none()
+        )
+
     context = {
-        "service_requests": active_requests,
+        "service_requests": service_requests,
+        "active_count": service_requests.exclude(
+            status="completed"
+        ).count(),
+        "active_session": session,
     }
 
     return render(
@@ -1346,11 +1465,6 @@ def my_service_requests(request):
         "orders/service_requests.html",
         context,
     )
-
-
-# ============================================================
-# CUSTOMER ACTIVE SESSION
-# ============================================================
 
 
 @login_required
@@ -1435,6 +1549,8 @@ def close_session(request, session_id):
     return redirect(
         "accounts:dashboard"
     )
+
+
 # ============================================================
 # GENERIC STAFF ORDER VIEW
 # ============================================================
@@ -1584,8 +1700,7 @@ def feedback_redirect(request, order_id):
     """
 
     order = get_object_or_404(
-        Order.objects
-        .select_related(
+        Order.objects.select_related(
             "session",
         ),
         pk=order_id,
@@ -1595,12 +1710,8 @@ def feedback_redirect(request, order_id):
     session_id = order.session_id
 
     return redirect(
-        reverse(
-            "feedback:session_feedback",
-            kwargs={
-                "session_id": session_id,
-            },
-        )
+        "feedback:create",
+        session_id=session_id,
     )
 
 
@@ -1632,6 +1743,3 @@ def home(request):
 # ============================================================
 # END OF ACCOUNTS VIEWS
 # ============================================================
-
-
-    
