@@ -36,7 +36,7 @@ def create_feedback(request, session_id):
         )
 
         if request.user.is_authenticated:
-            return redirect("orders:my_orders")
+            return redirect("accounts:my_orders")
 
         return redirect("/")
 
@@ -49,7 +49,7 @@ def create_feedback(request, session_id):
         )
 
         if request.user.is_authenticated:
-            return redirect("orders:my_orders")
+            return redirect("accounts:my_orders")
 
         return redirect("/")
 
@@ -110,7 +110,7 @@ def create_feedback(request, session_id):
         )
 
         if request.user.is_authenticated:
-            return redirect("orders:my_orders")
+            return redirect("accounts:my_orders")
 
         return redirect("/")
 
